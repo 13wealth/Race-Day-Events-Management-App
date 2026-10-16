@@ -1,38 +1,56 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace RaceDayApi.Security;
-
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-public class RequireRoleAttribute : Attribute, IAuthorizationFilter
+namespace RaceDayAPI.Security
 {
-    private readonly string[] _allowedRoles;
-
-    public RequireRoleAttribute(params string[] allowedRoles)
+    /*
+     * This attribute is used to restrict access to certain controller actions based on the user's role.
+     * It checks the user's role stored in the session and compares it against the allowed roles specified in the attribute.
+     * If the user is not logged in or does not have the required role, it returns an appropriate HTTP status code (401 or 403).
+     */
+    public class RequireRoleAttribute : Attribute, IAuthorizationFilter
     {
-        _allowedRoles = allowedRoles;
-    }
+        private string[] allowedRoles;
 
-    public void OnAuthorization(AuthorizationFilterContext context)
-    {
-        var session = context.HttpContext.Session;
-        var userId = session.GetInt32("UserId");
-        var role = session.GetString("Role");
-
-        // Not logged in: 401
-        if (userId is null || role is null)
+        public RequireRoleAttribute(params string[] roles)
         {
-            context.Result = new UnauthorizedObjectResult(new { error = "You must log in first." });
-            return;
+            allowedRoles = roles;
         }
 
-        // Logged in but wrong role: 403
-        if (_allowedRoles.Length > 0 && !_allowedRoles.Contains(role))
+        public void OnAuthorization(AuthorizationFilterContext context)
         {
-            context.Result = new ObjectResult(new { error = "Your role is not allowed to do this." })
+            int? userId = context.HttpContext.Session.GetInt32("UserId");
+            string role = context.HttpContext.Session.GetString("Role");
+
+            if (userId == null || role == null)
             {
-                StatusCode = 403
-            };
+                context.Result = new UnauthorizedObjectResult(
+                    new { error = "You must log in first." });
+                return;
+            }
+
+            bool allowed = false;
+            if (allowedRoles.Length == 0)
+            {
+                allowed = true;
+            }
+
+            for (int i = 0; i < allowedRoles.Length; i++)
+            {
+                if (allowedRoles[i] == role)
+                {
+                    allowed = true;
+                }
+            }
+
+            if (allowed == false)
+            {
+                context.Result = new ObjectResult(
+                    new { error = "Your role is not allowed to do this." })
+                {
+                    StatusCode = 403
+                };
+            }
         }
     }
 }
