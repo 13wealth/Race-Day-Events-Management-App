@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RaceDayAPI.Data;
 using RaceDayAPI.DTO;
 using RaceDayAPI.Models;
 using RaceDayAPI.Security;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using EventModel = RaceDayAPI.Models.RaceEvent;
 
 namespace RaceDayAPI.Controllers
@@ -19,8 +21,10 @@ namespace RaceDayAPI.Controllers
             _db = db;
         }
 
-        // Finds the organiser record for the logged-in user.
-        // Returns null if no organiser record exists.
+        /*
+         * Finds the organiser record for the logged-in user.
+         * Returns null if no organiser record exists.
+         */
         private Organiser? GetLoggedInOrganiser()
         {
             int? userId = HttpContext.Session.GetInt32("UserId");
@@ -37,7 +41,9 @@ namespace RaceDayAPI.Controllers
             return organiser;
         }
 
-        // Checks the event fields. Returns an error message, or null if all fields are valid.
+        /*
+         * Checks the event fields. Returns an error message, or null if all fields are valid.
+         */
         private string CheckEventFields(EventRequest request)
         {
             if (request.EventType != "run" && request.EventType != "walk" && request.EventType != "cycle")
@@ -72,7 +78,9 @@ namespace RaceDayAPI.Controllers
             };
         }
 
-        // POST api/events (organiser only)
+        /// <summary>
+        /// Creates an event owned by the logged-in organiser.Organiser only.
+        /// </summary>
         [HttpPost]
         [RequireRole("organiser")]
         public IActionResult CreateEvent([FromBody] EventRequest request)
@@ -108,7 +116,9 @@ namespace RaceDayAPI.Controllers
             return StatusCode(201, EventToResponse(newEvent));
         }
 
-        // GET api/events (any logged-in user)
+        /// <summary>
+        /// Lists all events.Any logged-in user.
+        /// </summary>
         [HttpGet]
         [RequireRole]
         public IActionResult GetEvents()
@@ -124,7 +134,9 @@ namespace RaceDayAPI.Controllers
             return Ok(result);
         }
 
-        // GET api/events/5 (any logged-in user)
+        /// <summary>
+        /// Returns one event by id.Any logged-in user.
+        /// </summary>
         [HttpGet("{eventId}")]
         [RequireRole]
         public IActionResult GetEvent(int eventId)
@@ -141,7 +153,9 @@ namespace RaceDayAPI.Controllers
             return Ok(EventToResponse(found));
         }
 
-        // PUT api/events/5 (organiser who owns the event only)
+        /// <summary>
+        /// Updates an event. Only the organiser who owns it.
+        /// </summary>
         [HttpPut("{eventId}")]
         [RequireRole("organiser")]
         public IActionResult UpdateEvent(int eventId, [FromBody] EventRequest request)
@@ -188,7 +202,9 @@ namespace RaceDayAPI.Controllers
             return Ok(EventToResponse(found));
         }
 
-        // DELETE api/events/5 (organiser who owns the event only)
+        /// <summary>
+        /// Deletes an event. Only the organiser who owns it.
+        /// </summary>
         [HttpDelete("{eventId}")]
         [RequireRole("organiser")]
         public IActionResult DeleteEvent(int eventId)
