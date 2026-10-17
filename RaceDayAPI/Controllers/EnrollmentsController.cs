@@ -17,7 +17,9 @@ namespace RaceDayAPI.Controllers
             _db = db;
         }
 
-        // Finds the participant record for the logged-in user
+        /*
+         * Helper methods that find the logged-in participant or organiser based on the session's UserId.
+         */
         private Participant GetLoggedInParticipant()
         {
             int? userIdNullable = HttpContext.Session.GetInt32("UserId");
@@ -35,7 +37,9 @@ namespace RaceDayAPI.Controllers
             return participant;
         }
 
-        // Finds the organiser record for the logged-in user
+        /*
+         * Helper method that finds the logged-in organiser based on the session's UserId.
+         */
         private Organiser GetLoggedInOrganiser()
         {
             int? userIdNullable = HttpContext.Session.GetInt32("UserId");
@@ -53,7 +57,9 @@ namespace RaceDayAPI.Controllers
             return organiser;
         }
 
-        // Builds the JSON shape returned for one enrolment
+        /*
+         * Builds the JSON shape returned for one enrolment
+         */
         private object EnrollmentToResponse(Enrollment en)
         {
             return new
@@ -67,7 +73,9 @@ namespace RaceDayAPI.Controllers
             };
         }
 
-        // POST api/enrolments (participant only)
+        /// <summary>
+        /// Enters the logged-in participant in an event by choosing a category. Participant only.
+        /// </summary>
         [HttpPost("enrolments")]
         [RequireRole("participant")]
         public IActionResult EnrolInEvent([FromBody] EnrollmentRequest request)
@@ -112,7 +120,9 @@ namespace RaceDayAPI.Controllers
             return StatusCode(201, EnrollmentToResponse(enrollment));
         }
 
-        // GET api/enrolments/mine (participant only)
+        /// <summary>
+        /// Lists the logged-in participant’s enrolments. Participant only.
+        /// </summary>
         [HttpGet("enrolments/mine")]
         [RequireRole("participant")]
         public IActionResult GetMyEnrollments()
@@ -136,7 +146,9 @@ namespace RaceDayAPI.Controllers
             return Ok(result);
         }
 
-        // GET api/events/5/enrolments (organiser who owns the event only)
+        /// <summary>
+        /// Lists the enrolments for a specific event. Organiser who owns the event only.
+        /// </summary>
         [HttpGet("events/{eventId}/enrolments")]
         [RequireRole("organiser")]
         public IActionResult GetEventEnrollments(int eventId)
