@@ -19,7 +19,9 @@ namespace RaceDayAPI.Controllers
             _db = db;
         }
 
-        // Finds the organiser record for the logged-in user
+        /*
+         * Helper methods to get the logged-in organiser or participant
+         */
         private Organiser GetLoggedInOrganiser()
         {
             int? userIdNullable = HttpContext.Session.GetInt32("UserId");
@@ -37,7 +39,9 @@ namespace RaceDayAPI.Controllers
             return organiser;
         }
 
-        // Finds the participant record for the logged-in user
+        /*
+         * Helper method to get the logged-in participant
+         */
         private Participant GetLoggedInParticipant()
         {
             int? userIdNullable = HttpContext.Session.GetInt32("UserId");
@@ -55,7 +59,9 @@ namespace RaceDayAPI.Controllers
             return participant;
         }
 
-        // Builds the JSON shape returned for one result
+        /*
+         * Helper method to convert a RaceResult to a response object
+         */
         private object ResultToResponse(RaceResult r)
         {
             return new
@@ -68,7 +74,9 @@ namespace RaceDayAPI.Controllers
             };
         }
 
-        // POST api/enrolments/5/result (organiser who owns the event only)
+        /// <summary>
+        /// Records start time, finish time and position for an enrolment. Only the organiser who owns the event.
+        /// </summary>
         [HttpPost("enrolments/{enrolmentId}/result")]
         [RequireRole("organiser")]
         public IActionResult RecordResult(int enrolmentId, [FromBody] ResultRequest request)
@@ -134,7 +142,9 @@ namespace RaceDayAPI.Controllers
             return StatusCode(201, ResultToResponse(result));
         }
 
-        // GET api/results/5 (participant who owns it, or organiser who owns the event)
+        /// <summary>
+        /// Gets a specific result by ID. Only the participant who owns it, or the organiser who owns the event.
+        /// </summary>
         [HttpGet("results/{resultId}")]
         [RequireRole]
         public IActionResult GetResult(int resultId)
