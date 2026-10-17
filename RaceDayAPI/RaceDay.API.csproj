@@ -23,4 +23,8 @@
 		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.1" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Include=".github\workflows\ci.yml" />
+	</ItemGroup>
+
 </Project>
