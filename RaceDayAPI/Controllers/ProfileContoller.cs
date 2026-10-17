@@ -70,10 +70,13 @@ namespace RaceDayAPI.Controllers
         }
 
         /// <summary>
-        /// Gets the logged-in user's profile. Only the logged-in user can view their own profile.
+        /// Returns the logged-in user's profile. Any logged-in user.
         /// </summary>
         [HttpGet]
         [RequireRole]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
         public IActionResult GetMyProfile()
         {
             int userId = HttpContext.Session.GetInt32("UserId").Value;
@@ -89,10 +92,13 @@ namespace RaceDayAPI.Controllers
         }
 
         /// <summary>
-        /// Updates the logged-in user’s first name, last name and phone. Any logged-in user.
+        /// Updates the logged-in user's first name, last name and phone. Any logged-in user.
         /// </summary>
         [HttpPut]
         [RequireRole]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
         public IActionResult UpdateMyProfile([FromBody] ProfileRequest request)
         {
             int userId = HttpContext.Session.GetInt32("UserId").Value;
