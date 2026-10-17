@@ -5,15 +5,12 @@ using RaceDayAPI.Data;
 using RaceDayAPI.DTO;
 using RaceDayAPI.Models;
 using RaceDayAPI.Security;
+using static System.Collections.Specialized.BitVector32;
 using UserModel = RaceDayAPI.Models.RaceDayUser;
 
 namespace RaceDayAPI.Controllers
 {
-    /*
-     * This controller handles user authentication and registration.
-     * It provides endpoints for user registration, login, logout, 
-     *   and retrieving the currently logged-in user's information.
-     */
+
     [ApiController]
     [Route("api/user")]
     public class AuthController : ControllerBase
@@ -27,9 +24,11 @@ namespace RaceDayAPI.Controllers
             _passwordHasher = passwordHasher;
         }
 
-        /*
-         * POST api/user/register
-         */
+
+        /// <summary>
+        /// Registers a user as an organiser or participant, with personal details. 
+        /// Returns 201, or 409 if the username or email is taken.
+        /// </summary>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
@@ -113,11 +112,10 @@ namespace RaceDayAPI.Controllers
             });
         }
 
-        /*
-         * POST api/user/login
-         * This endpoint allows a user to log in by providing their username and password.
-         * If the credentials are valid, it returns the user's information and stores their id and role in the session.
-         */
+        /// <summary>
+        /// Logs in with username and password and starts a session.
+        /// Returns 200, or 401 if the details are wrong.
+        /// </summary>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
@@ -154,11 +152,10 @@ namespace RaceDayAPI.Controllers
             });
         }
 
-        /*
-         * POST api/user/logout
-         * This endpoint logs the user out by clearing their session data.
-         * It requires the user to be logged in (authenticated) to access this functionality.
-         */
+        /// <summary>
+        /// Ends the current session.
+        /// Requires a logged-in user.
+        /// </summary>
         [HttpPost("logout")]
         [RequireRole]
         public IActionResult Logout()
@@ -167,11 +164,10 @@ namespace RaceDayAPI.Controllers
             return Ok(new { message = "Logged out successfully." });
         }
 
-        /*
-         * GET api/user/me
-         * This endpoint returns the currently logged-in user's id and role.
-         * It requires the user to be logged in (authenticated) to access this information.
-         */
+        /// <summary>
+        /// Returns the user id and role stored in the current session.
+        /// Requires a logged-in user.
+        /// </summary>
         [HttpGet("me")]
         [RequireRole]
         public IActionResult Me()

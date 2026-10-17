@@ -3,6 +3,7 @@ using RaceDayAPI.Data;
 using RaceDayAPI.DTO;
 using RaceDayAPI.Models;
 using RaceDayAPI.Security;
+using static Azure.Core.HttpHeader;
 
 namespace RaceDayAPI.Controllers
 {
@@ -17,7 +18,9 @@ namespace RaceDayAPI.Controllers
             _db = db;
         }
 
-        // Finds the organiser record for the logged-in user
+        /*
+         * Helper methods to get the logged-in organiser and find an event by id
+         */
         private Organiser GetLoggedInOrganiser()
         {
             int? userIdNullable = HttpContext.Session.GetInt32("UserId");
@@ -35,7 +38,9 @@ namespace RaceDayAPI.Controllers
             return organiser;
         }
 
-        // Finds an event by id
+        /*
+         * Helper method to find an event by id
+         */
         private RaceEvent FindEvent(int eventId)
         {
             RaceEvent found = (from e in _db.Events
@@ -50,7 +55,9 @@ namespace RaceDayAPI.Controllers
             return found;
         }
 
-        // Builds the JSON shape returned for one category
+        /*
+         * Builds the JSON shape returned for one category
+         */
         private object CategoryToResponse(Category c)
         {
             return new
@@ -61,7 +68,9 @@ namespace RaceDayAPI.Controllers
             };
         }
 
-        // POST api/events/5/categories (organiser who owns the event)
+        /// <summary>
+        /// Adds a category to an event. Only the organiser who owns the event.
+        /// </summary>
         [HttpPost]
         [RequireRole("organiser")]
         public IActionResult CreateCategory(int eventId, [FromBody] CategoryRequest request)
@@ -94,7 +103,9 @@ namespace RaceDayAPI.Controllers
             return StatusCode(201, CategoryToResponse(category));
         }
 
-        // GET api/events/5/categories (any logged-in user)
+        /// <summary>
+        /// Lists the categories for an event. Any logged-in user.
+        /// </summary>
         [HttpGet]
         [RequireRole]
         public IActionResult GetCategories(int eventId)
@@ -118,7 +129,9 @@ namespace RaceDayAPI.Controllers
             return Ok(result);
         }
 
-        // GET api/events/5/categories/3 (any logged-in user)
+        /// <summary>
+        /// Returns one category by id. Any logged-in user.
+        /// </summary>
         [HttpGet("{categoryId}")]
         [RequireRole]
         public IActionResult GetCategory(int eventId, int categoryId)
@@ -135,7 +148,9 @@ namespace RaceDayAPI.Controllers
             return Ok(CategoryToResponse(found));
         }
 
-        // PUT api/events/5/categories/3 (organiser who owns the event)
+        /// <summary>
+        /// Renames a category. Only the organiser who owns the event.
+        /// </summary>
         [HttpPut("{categoryId}")]
         [RequireRole("organiser")]
         public IActionResult UpdateCategory(int eventId, int categoryId, [FromBody] CategoryRequest request)
@@ -172,7 +187,9 @@ namespace RaceDayAPI.Controllers
             return Ok(CategoryToResponse(found));
         }
 
-        // DELETE api/events/5/categories/3 (organiser who owns the event)
+        /// <summary>
+        /// Deletes a category. Only the organiser who owns the event.
+        /// </summary>
         [HttpDelete("{categoryId}")]
         [RequireRole("organiser")]
         public IActionResult DeleteCategory(int eventId, int categoryId)
