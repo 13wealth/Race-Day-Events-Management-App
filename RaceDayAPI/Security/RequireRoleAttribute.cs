@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace RaceDayAPI.Security
+namespace RaceDay.API.Security
 {
     /*
      * This attribute is used to restrict access to certain controller actions based on the user's role.

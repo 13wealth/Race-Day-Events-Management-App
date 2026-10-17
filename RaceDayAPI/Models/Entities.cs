@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace RaceDayAPI.Models;
+namespace RaceDay.API.Models;
 
 /*
  * Represents a user in the RaceDay application, 

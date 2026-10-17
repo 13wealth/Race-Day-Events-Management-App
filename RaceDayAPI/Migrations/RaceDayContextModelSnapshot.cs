@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using RaceDayAPI.Data;
+using RaceDay.API.Data;
 
 #nullable disable
 
-namespace RaceDayAPI.Migrations
+namespace RaceDay.API.Migrations
 {
     [DbContext(typeof(RaceDayContext))]
     partial class RaceDayContextModelSnapshot : ModelSnapshot

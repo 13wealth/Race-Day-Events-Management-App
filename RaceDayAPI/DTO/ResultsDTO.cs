@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RaceDayAPI.Dtos
+namespace RaceDay.API.Dtos
 {
     public class ResultRequest
     {

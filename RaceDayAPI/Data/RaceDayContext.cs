@@ -1,9 +1,9 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
-using RaceDayAPI.Models;
-using RouteModel = RaceDayAPI.Models.Route;
+using RaceDay.API.Models;
+using RouteModel = RaceDay.API.Models.Route;
 
-namespace RaceDayAPI.Data
+namespace RaceDay.API.Data
 {
     public class RaceDayContext : DbContext
     {

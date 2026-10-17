@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RaceDayAPI.Data;
-using RaceDayAPI.Dtos;
-using RaceDayAPI.Models;
-using RaceDayAPI.Security;
+using RaceDay.API.Data;
+using RaceDay.API.Dtos;
+using RaceDay.API.Models;
+using RaceDay.API.Security;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
-namespace RaceDayAPI.Controllers
+namespace RaceDay.API.Controllers
 {
     [ApiController]
     [Route("api/profile")]

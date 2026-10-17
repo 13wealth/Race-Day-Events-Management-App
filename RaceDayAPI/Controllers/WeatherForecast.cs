@@ -1,4 +1,4 @@
-namespace RaceDayAPI.Controllers
+namespace RaceDay.API.Controllers
 {
     public class WeatherForecast
     {

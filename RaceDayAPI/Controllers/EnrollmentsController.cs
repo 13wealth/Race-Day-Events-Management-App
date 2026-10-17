@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RaceDayAPI.Data;
-using RaceDayAPI.DTO;
-using RaceDayAPI.Models;
-using RaceDayAPI.Security;
+using RaceDay.API.Data;
+using RaceDay.API.DTO;
+using RaceDay.API.Models;
+using RaceDay.API.Security;
 
-namespace RaceDayAPI.Controllers
+namespace RaceDay.API.Controllers
 {
     [ApiController]
     [Route("api")]

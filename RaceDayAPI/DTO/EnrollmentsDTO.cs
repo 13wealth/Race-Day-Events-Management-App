@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace RaceDayAPI.DTO
+namespace RaceDay.API.DTO
 {
     public class EnrollmentRequest
     {

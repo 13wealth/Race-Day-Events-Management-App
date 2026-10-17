@@ -1,4 +1,4 @@
-﻿namespace RaceDayAPI.Dtos
+﻿namespace RaceDay.API.Dtos
 {
     public class ProfileRequest
     {

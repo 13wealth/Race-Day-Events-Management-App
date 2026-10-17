@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace RaceDayAPI.Migrations
+namespace RaceDay.API.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

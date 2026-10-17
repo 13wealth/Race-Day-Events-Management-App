@@ -1,14 +1,14 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RaceDayAPI.Data;
-using RaceDayAPI.DTO;
-using RaceDayAPI.Models;
-using RaceDayAPI.Security;
+using RaceDay.API.Data;
+using RaceDay.API.DTO;
+using RaceDay.API.Models;
+using RaceDay.API.Security;
 using static System.Collections.Specialized.BitVector32;
-using UserModel = RaceDayAPI.Models.RaceDayUser;
+using UserModel = RaceDay.API.Models.RaceDayUser;
 
-namespace RaceDayAPI.Controllers
+namespace RaceDay.API.Controllers
 {
 
     [ApiController]

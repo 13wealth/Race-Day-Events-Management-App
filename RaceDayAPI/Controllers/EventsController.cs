@@ -1,14 +1,14 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RaceDayAPI.Data;
-using RaceDayAPI.DTO;
-using RaceDayAPI.Models;
-using RaceDayAPI.Security;
+using RaceDay.API.Data;
+using RaceDay.API.DTO;
+using RaceDay.API.Models;
+using RaceDay.API.Security;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using EventModel = RaceDayAPI.Models.RaceEvent;
+using EventModel = RaceDay.API.Models.RaceEvent;
 
-namespace RaceDayAPI.Controllers
+namespace RaceDay.API.Controllers
 {
     [ApiController]
     [Route("api/events")]

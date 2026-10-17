@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace RaceDayAPI.DTO
+namespace RaceDay.API.DTO
 {
     /*
      * Resposnible for handling user registration requests.
