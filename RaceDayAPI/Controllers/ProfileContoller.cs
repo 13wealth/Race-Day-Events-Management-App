@@ -3,6 +3,7 @@ using RaceDayAPI.Data;
 using RaceDayAPI.Dtos;
 using RaceDayAPI.Models;
 using RaceDayAPI.Security;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace RaceDayAPI.Controllers
 {
@@ -17,9 +18,11 @@ namespace RaceDayAPI.Controllers
             _db = db;
         }
 
-        // Finds the user's profile and their role record (organiser or participant)
-        // and returns the name and phone fields as a list of values.
-        // The method below uses the session to find the user.
+        /*
+         * Finds the user's profile and their role record (organiser or participant)
+         * and returns the name and phone fields as a list of values.
+         * The method below uses the session to find the user.
+         */
         private object GetProfileResponse(int userId, string role)
         {
             if (role == "organiser")
@@ -66,7 +69,9 @@ namespace RaceDayAPI.Controllers
             }
         }
 
-        // GET api/profile (any logged-in user)
+        /// <summary>
+        /// Gets the logged-in user's profile. Only the logged-in user can view their own profile.
+        /// </summary>
         [HttpGet]
         [RequireRole]
         public IActionResult GetMyProfile()
@@ -83,7 +88,9 @@ namespace RaceDayAPI.Controllers
             return Ok(profile);
         }
 
-        // PUT api/profile (any logged-in user)
+        /// <summary>
+        /// Updates the logged-in user’s first name, last name and phone. Any logged-in user.
+        /// </summary>
         [HttpPut]
         [RequireRole]
         public IActionResult UpdateMyProfile([FromBody] ProfileRequest request)
