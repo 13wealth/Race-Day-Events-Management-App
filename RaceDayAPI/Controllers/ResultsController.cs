@@ -79,6 +79,12 @@ namespace RaceDayAPI.Controllers
         /// </summary>
         [HttpPost("enrolments/{enrolmentId}/result")]
         [RequireRole("organiser")]
+        [ProducesResponseType(201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(409)]
         public IActionResult RecordResult(int enrolmentId, [FromBody] ResultRequest request)
         {
             Organiser organiser = GetLoggedInOrganiser();
@@ -143,10 +149,14 @@ namespace RaceDayAPI.Controllers
         }
 
         /// <summary>
-        /// Gets a specific result by ID. Only the participant who owns it, or the organiser who owns the event.
+        /// Returns one result. The participant who owns it, or the organiser who owns the event.
         /// </summary>
         [HttpGet("results/{resultId}")]
         [RequireRole]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
         public IActionResult GetResult(int resultId)
         {
             RaceResult found = (from r in _db.Results

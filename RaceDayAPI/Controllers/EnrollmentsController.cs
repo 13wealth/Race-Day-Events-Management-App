@@ -78,6 +78,10 @@ namespace RaceDayAPI.Controllers
         /// </summary>
         [HttpPost("enrolments")]
         [RequireRole("participant")]
+        [ProducesResponseType(201)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(409)]
         public IActionResult EnrolInEvent([FromBody] EnrollmentRequest request)
         {
             Participant participant = GetLoggedInParticipant();
@@ -121,10 +125,12 @@ namespace RaceDayAPI.Controllers
         }
 
         /// <summary>
-        /// Lists the logged-in participant’s enrolments. Participant only.
+        /// Lists the logged-in participant's enrolments. Participant only.
         /// </summary>
         [HttpGet("enrolments/mine")]
         [RequireRole("participant")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult GetMyEnrollments()
         {
             Participant participant = GetLoggedInParticipant();
@@ -147,10 +153,14 @@ namespace RaceDayAPI.Controllers
         }
 
         /// <summary>
-        /// Lists the enrolments for a specific event. Organiser who owns the event only.
+        /// Lists all enrolments for an event. Only the organiser who owns the event.
         /// </summary>
         [HttpGet("events/{eventId}/enrolments")]
         [RequireRole("organiser")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
         public IActionResult GetEventEnrollments(int eventId)
         {
             Organiser organiser = GetLoggedInOrganiser();

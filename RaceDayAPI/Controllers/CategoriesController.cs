@@ -73,6 +73,10 @@ namespace RaceDayAPI.Controllers
         /// </summary>
         [HttpPost]
         [RequireRole("organiser")]
+        [ProducesResponseType(201)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
         public IActionResult CreateCategory(int eventId, [FromBody] CategoryRequest request)
         {
             Organiser organiser = GetLoggedInOrganiser();
@@ -108,6 +112,9 @@ namespace RaceDayAPI.Controllers
         /// </summary>
         [HttpGet]
         [RequireRole]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
         public IActionResult GetCategories(int eventId)
         {
             RaceEvent parent = FindEvent(eventId);
@@ -130,10 +137,13 @@ namespace RaceDayAPI.Controllers
         }
 
         /// <summary>
-        /// Returns one category by id. Any logged-in user.
+        /// Returns one category of an event. Any logged-in user.
         /// </summary>
         [HttpGet("{categoryId}")]
         [RequireRole]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
         public IActionResult GetCategory(int eventId, int categoryId)
         {
             Category found = (from c in _db.Categories
@@ -153,6 +163,10 @@ namespace RaceDayAPI.Controllers
         /// </summary>
         [HttpPut("{categoryId}")]
         [RequireRole("organiser")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
         public IActionResult UpdateCategory(int eventId, int categoryId, [FromBody] CategoryRequest request)
         {
             Organiser organiser = GetLoggedInOrganiser();
@@ -192,6 +206,10 @@ namespace RaceDayAPI.Controllers
         /// </summary>
         [HttpDelete("{categoryId}")]
         [RequireRole("organiser")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
         public IActionResult DeleteCategory(int eventId, int categoryId)
         {
             Organiser organiser = GetLoggedInOrganiser();

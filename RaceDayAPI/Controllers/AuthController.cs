@@ -26,10 +26,14 @@ namespace RaceDayAPI.Controllers
 
 
         /// <summary>
-        /// Registers a user as an organiser or participant, with personal details. 
+        /// Registers a user as an organiser or participant, with personal details.
         /// Returns 201, or 409 if the username or email is taken.
         /// </summary>
         [HttpPost("register")]
+        [ProducesResponseType(201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(409)]
+
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             string role = request.Role.ToLower();
@@ -117,6 +121,9 @@ namespace RaceDayAPI.Controllers
         /// Returns 200, or 401 if the details are wrong.
         /// </summary>
         [HttpPost("login")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = await (from u in _db.Users
@@ -153,11 +160,12 @@ namespace RaceDayAPI.Controllers
         }
 
         /// <summary>
-        /// Ends the current session.
-        /// Requires a logged-in user.
+        /// Ends the current session. Requires a logged-in user.
         /// </summary>
         [HttpPost("logout")]
         [RequireRole]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
@@ -170,6 +178,8 @@ namespace RaceDayAPI.Controllers
         /// </summary>
         [HttpGet("me")]
         [RequireRole]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult Me()
         {
             return Ok(new

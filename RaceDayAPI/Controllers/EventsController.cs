@@ -60,7 +60,9 @@ namespace RaceDayAPI.Controllers
             return null;
         }
 
-        // Builds the JSON shape returned for one event
+        /* 
+         * Builds the JSON shape returned for one event
+         */
         private object EventToResponse(EventModel e)
         {
             return new
@@ -79,10 +81,15 @@ namespace RaceDayAPI.Controllers
         }
 
         /// <summary>
-        /// Creates an event owned by the logged-in organiser.Organiser only.
+        /// Creates an event owned by the logged-in organiser. Organiser only.
         /// </summary>
         [HttpPost]
         [RequireRole("organiser")]
+        [ProducesResponseType(201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
         public IActionResult CreateEvent([FromBody] EventRequest request)
         {
             Organiser? organiser = GetLoggedInOrganiser();
@@ -117,10 +124,12 @@ namespace RaceDayAPI.Controllers
         }
 
         /// <summary>
-        /// Lists all events.Any logged-in user.
+        /// Lists all events. Any logged-in user.
         /// </summary>
         [HttpGet]
         [RequireRole]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult GetEvents()
         {
             List<EventModel> events = (from e in _db.Events select e).ToList();
@@ -135,10 +144,13 @@ namespace RaceDayAPI.Controllers
         }
 
         /// <summary>
-        /// Returns one event by id.Any logged-in user.
+        /// Returns one event by id. Any logged-in user.
         /// </summary>
         [HttpGet("{eventId}")]
         [RequireRole]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
         public IActionResult GetEvent(int eventId)
         {
             EventModel? found = (from e in _db.Events
@@ -158,6 +170,11 @@ namespace RaceDayAPI.Controllers
         /// </summary>
         [HttpPut("{eventId}")]
         [RequireRole("organiser")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
         public IActionResult UpdateEvent(int eventId, [FromBody] EventRequest request)
         {
             Organiser? organiser = GetLoggedInOrganiser();
@@ -207,6 +224,10 @@ namespace RaceDayAPI.Controllers
         /// </summary>
         [HttpDelete("{eventId}")]
         [RequireRole("organiser")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
         public IActionResult DeleteEvent(int eventId)
         {
             Organiser? organiser = GetLoggedInOrganiser();
