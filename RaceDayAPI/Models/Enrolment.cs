@@ -32,8 +32,8 @@ public class Enrollment
     [Column("status", TypeName = "varchar(20)")]
     public string Status { get; set; } = "registered";
 
-    public Participant Participant { get; set; } = null!;
-    public RaceEvent Event { get; set; } = null!;
-    public Category Category { get; set; } = null!;
-    public RaceResult? Result { get; set; }
+    public Participant Participant { get; set; } = null!;                               // Foreign key relationship to Participant
+    public RaceEvent Event { get; set; } = null!;                                       // Foreign key relationship to RaceEvent
+    public Category Category { get; set; } = null!;                                     // Foreign key relationship to Category
+    public RaceResult? Result { get; set; }                                             // Navigation property to RaceResult, can be null if the race hasn't occurred yet
 }

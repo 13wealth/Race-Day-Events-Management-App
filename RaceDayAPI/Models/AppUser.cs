@@ -70,9 +70,9 @@ public class Profile
 [Index(nameof(ProfileId), IsUnique = true)]
 public class Organiser
 {
-    [Key]
-    [Column("organiser_id")]
-    public int OrganiserId { get; set; }
+    [Key]                                                   // Primary key for the Organiser entity
+    [Column("organiser_id")]                                // Maps to the "organiser_id" column in the database
+    public int OrganiserId { get; set; }                    // Sets the property as the primary key for the Organiser entity
 
     [Column("profile_id")]
     public int ProfileId { get; set; }

@@ -1,25 +1,31 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RaceDay.API.Data;
-using RaceDay.API.DTO;
-using RaceDay.API.Models;
-using RaceDay.API.Security;
-using static Azure.Core.HttpHeader;
+using RaceDay.API.Data;                                                                 // Import the namespace where RaceDayContext is defined
+using RaceDay.API.DTO;                                                                  // Import the namespace where CategoryRequest is defined
+using RaceDay.API.Models;                                                               // Import the namespace where Category, Event and Organiser are defined
+using RaceDay.API.Security;                                                             // Import the namespace where RequireRoleAttribute is defined
 
 namespace RaceDay.API.Controllers
 {
-    [ApiController]
-    [Route("api/events/{eventId}/categories")]
+    [ApiController]                                                                     // Attribute tell ASP.NET Core that this class handles HTTP API requests and responses
+    [Route("api/events/{eventId}/categories")]                                          // Attribute defines the base route for all actions in this controller, with a placeholder for eventId
     public class CategoriesController : ControllerBase
     {
-        private readonly RaceDayContext _db;
+        private readonly RaceDayContext _db;                                            // Private field to hold the database context
 
+        /*
+         * Constructor to inject the database context
+         * It is called when the controller is instantiated.
+         * It receives an instance of RaceDayContext from the dependency injection container
+         */
         public CategoriesController(RaceDayContext db)
         {
-            _db = db;
+            _db = db; 
         }
 
         /*
          * Helper methods to get the logged-in organiser and find an event by id
+         * It is called by the action methods to check if the user is an organiser and organiser profile.
+         * Query the database for an organiser profile associated with the logged-in user.
          */
         private Organiser GetLoggedInOrganiser()
         {
@@ -40,6 +46,9 @@ namespace RaceDay.API.Controllers
 
         /*
          * Helper method to find an event by id
+         * It is called by the action methods to check if the event exists and to get its details.
+         * Query the database for an event with the given eventId. 
+         * If found, return the RaceEvent object; otherwise, return null.
          */
         private RaceEvent FindEvent(int eventId)
         {
@@ -57,6 +66,8 @@ namespace RaceDay.API.Controllers
 
         /*
          * Builds the JSON shape returned for one category
+         * Turns a Category object from the database into the JSON shape the client receives.
+         * It is called by action methods to format the response for a category.
          */
         private object CategoryToResponse(Category c)
         {

@@ -9,7 +9,7 @@ namespace RaceDay.API.Models;
 /// which participants can register for.
 /// </summary>
 [Table("CATEGORY")]
-[Index(nameof(EventId), nameof(CategoryName), IsUnique = true)]
+[Index(nameof(EventId), nameof(CategoryName), IsUnique = true)] 
 public class Category
 {
     [Key]
