@@ -6,7 +6,10 @@ RaceDay is an Events Management application designed to manage race events, orga
 
 The project includes a SQL Server database design, API endpoint documentation and an Entity Relationship Diagram (ERD).
 
+Illustration video: [▶️ RaceDay illustration video](https://youtu.be/mhHBowUxImE)
+
 ## Repository Structure
+
 
 ```plaintext
 ST10472346-RaceDay-Events-Management-App/
@@ -145,6 +148,12 @@ The following screenshot shows the successful GitHub Actions workflow execution:
 ## Project Documentation
 
 All supporting project documentation is stored in the `/docs` folder.
+
+RaceDayAPI project documentation (RaceDayAPI/docs):
+
+- No documents currently present in RaceDayAPI/docs. Place project-specific API docs here if available.
+
+
 
 ## Author
 
