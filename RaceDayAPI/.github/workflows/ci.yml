@@ -1,0 +1,31 @@
+name: RaceDay API CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Find the solution file
+        id: find
+        shell: pwsh
+        run: |
+          $sln = Get-ChildItem -Path . -Recurse -Filter *.sln | Select-Object -First 1
+          echo "sln=$($sln.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Build the solution
+        run: dotnet build "${{ steps.find.outputs.sln }}"
+
+      - name: Run the unit tests
+        run: dotnet test "${{ steps.find.outputs.sln }}" --verbosity normal
