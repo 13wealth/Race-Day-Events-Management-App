@@ -11,10 +11,10 @@
 
 using Microsoft.AspNetCore.Mvc;
 using RaceDay.Contracts;
-using RaceDay.Mvc.Services;
-using RaceDay.Mvc.ViewModels;
+using RaceDay.MVC.Services;
+using RaceDay.MVC.ViewModels;
 
-namespace RaceDay.Mvc.Controllers;
+namespace RaceDay.MVC.Controllers;
 
 public class AuthController : Controller
 {

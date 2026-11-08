@@ -6,7 +6,7 @@
 
 using System.ComponentModel.DataAnnotations;
 
-namespace RaceDay.Mvc.ViewModels;
+namespace RaceDay.MVC.ViewModels;
 
 public class RegisterVm
 {

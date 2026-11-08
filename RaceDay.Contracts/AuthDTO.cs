@@ -3,36 +3,30 @@ using System.Text.Json.Serialization;
 
 namespace RaceDay.Contracts
 {
-    /*
-     * Resposnible for handling user registration requests.
-     */
     public class RegisterRequest
     {
         [Required]
-        public string Username { get; set; } = "";                  // Add a default value to avoid null reference issues
+        public string Username { get; set; } = "";
 
         [Required]
-        [EmailAddress]                                              // Add EmailAddress attribute to validate email format
-        public string Email { get; set; } = "";                     // Add a default value to avoid null reference issues
+        [EmailAddress]
+        public string Email { get; set; } = "";
 
         [Required]
-        public string Password { get; set; } = "";                  // Add a default value to avoid null reference issues
+        public string Password { get; set; } = "";
 
         [Required]
-        public string Role { get; set; } = "";                      // Add a default value to avoid null reference issues
+        public string Role { get; set; } = "";
 
         [Required]
-        public string FirstName { get; set; } = "";                 //  Add a default value to avoid null reference issues
+        public string FirstName { get; set; } = "";
 
         [Required]
-        public string LastName { get; set; } = "";                  // Add a default value to avoid null reference issues
+        public string LastName { get; set; } = "";
 
-        public string Phone { get; set; } = "";                     // Add a default value to avoid null reference issues
+        public string Phone { get; set; } = "";
     }
 
-    /*
-     * Responsible for handling user login requests.
-     */
     public class LoginRequest
     {
         [Required]
@@ -58,5 +52,11 @@ namespace RaceDay.Contracts
 
         [JsonPropertyName("first_name")]
         public string FirstName { get; set; } = "";
+    }
+
+    public class AuthErrorResponse
+    {
+        public string Error { get; set; } = "";
+        public int StatusCode { get; set; }
     }
 }

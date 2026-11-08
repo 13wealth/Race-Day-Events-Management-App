@@ -8,7 +8,7 @@
 using System.Net.Http.Json;                                                             // Allows us to work with JSON when sending HTTP requests
 using System.Text.Json;                                                                 // Allows us to deserialize JSON responses into C# objects
 
-namespace RaceDay.Mvc.Services;
+namespace RaceDay.MVC.Services;
 
 public class RaceDayApiClient
 {

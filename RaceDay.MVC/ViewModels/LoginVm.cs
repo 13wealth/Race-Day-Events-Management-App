@@ -1,7 +1,7 @@
 ﻿
 using System.ComponentModel.DataAnnotations;                                            // Gives us access to validation attributes such as [Required] and [EmailAddress]
 
-namespace RaceDay.Mvc.ViewModels;
+namespace RaceDay.MVC.ViewModels;
 
 public class LoginVm
 {
