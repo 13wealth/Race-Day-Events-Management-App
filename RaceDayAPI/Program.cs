@@ -65,6 +65,9 @@ void ConfigureSession(SessionOptions options)
  */
 void ConfigureSwagger(SwaggerGenOptions options)
 {
-    string xmlPath = Path.Combine(AppContext.BaseDirectory, "RaceDayAPI.xml");
+    string xmlPath = Path.Combine(
+                                    AppContext.BaseDirectory, 
+                                    "RaceDay.API.xml"
+        );
     options.IncludeXmlComments(xmlPath);
 }

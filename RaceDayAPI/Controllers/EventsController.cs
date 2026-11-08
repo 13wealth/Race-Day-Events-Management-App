@@ -5,17 +5,36 @@ using RaceDay.API.Services;
 
 namespace RaceDay.API.Controllers
 {
+    /// <summary>
+    /// Manages race events.
+    /// Provides endpoints for creating, retrieving, updating, and deleting events.
+    /// </summary>
     [ApiController]
     [Route("api/events")]
     public class EventsController : ControllerBase
     {
         private readonly EventService _eventService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EventsController"/> class.
+        /// </summary>
+        /// <param name="eventService">The event service.</param>
         public EventsController(EventService eventService)
         {
             _eventService = eventService;
         }
 
+        /// <summary>
+        /// Creates a new race event.
+        /// Only event organizers can perform this action.
+        /// </summary>
+        /// <param name="request">The event request containing event details.</param>
+        /// <returns>
+        /// A 201 Created response with the event details on success,
+        /// a 400 Bad Request if validation fails,
+        /// a 403 Forbidden if user is not an organizer,
+        /// or a 404 Not Found if a required resource doesn't exist.
+        /// </returns>
         [HttpPost]
         [RequireRole("organiser")]
         [ProducesResponseType(201)]
@@ -52,6 +71,10 @@ namespace RaceDay.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Retrieves all race events.
+        /// </summary>
+        /// <returns>A 200 OK response with the list of all events.</returns>
         [HttpGet]
         [RequireRole]
         [ProducesResponseType(200)]
@@ -62,6 +85,14 @@ namespace RaceDay.API.Controllers
             return Ok(response.Events);
         }
 
+        /// <summary>
+        /// Retrieves a specific event by ID.
+        /// </summary>
+        /// <param name="eventId">The ID of the event.</param>
+        /// <returns>
+        /// A 200 OK response with the event details,
+        /// or a 404 Not Found if the event doesn't exist.
+        /// </returns>
         [HttpGet("{eventId}")]
         [RequireRole]
         [ProducesResponseType(200)]
@@ -91,6 +122,18 @@ namespace RaceDay.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Updates an existing event.
+        /// Only event organizers can perform this action.
+        /// </summary>
+        /// <param name="eventId">The ID of the event to update.</param>
+        /// <param name="request">The event request containing updated details.</param>
+        /// <returns>
+        /// A 200 OK response with the updated event details on success,
+        /// a 400 Bad Request if validation fails,
+        /// a 403 Forbidden if user is not the event organizer,
+        /// or a 404 Not Found if the event doesn't exist.
+        /// </returns>
         [HttpPut("{eventId}")]
         [RequireRole("organiser")]
         [ProducesResponseType(200)]
@@ -132,6 +175,16 @@ namespace RaceDay.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Deletes a race event.
+        /// Only event organizers can perform this action.
+        /// </summary>
+        /// <param name="eventId">The ID of the event to delete.</param>
+        /// <returns>
+        /// A 204 No Content response on successful deletion,
+        /// a 403 Forbidden if user is not the event organizer,
+        /// or a 404 Not Found if the event doesn't exist.
+        /// </returns>
         [HttpDelete("{eventId}")]
         [RequireRole("organiser")]
         [ProducesResponseType(204)]

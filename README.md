@@ -112,6 +112,31 @@ dotnet test
 ✅ **Solution builds successfully**  
 ✅ **Type safety verified** (RaceDayUser model properly configured)
 
+## Testing & Validation Checklist
+
+The following functionality has been tested and verified to be working correctly using Swagger document. 
+Complete evidence of testing and results is documented in [docs/api-test-results-evidence.pdf](docs/api-test-results-evidence.pdf).
+
+### Completed Checks
+
+- ✅ **RaceDay.Api builds with no errors** - Project successfully compiles in .NET 10
+- ✅ **SQL Server connection works** - Database connectivity verified and functional
+- ✅ **Swagger opens** - API documentation endpoint accessible via Swagger UI
+- ✅ **Registration works** - User registration endpoint tested and operational
+- ✅ **Login works and creates the API session** - Authentication and session management verified
+- ✅ **GET /api/events works** - Event retrieval endpoint functional
+- ✅ **Organiser can create/update/delete an Event** - Event management operations verified for organiser role
+- ✅ **Participant can enrol** - Enrollment functionality tested and working
+- ✅ **Organiser can view enrolments** - Organiser access to enrollment data verified
+- ✅ **Organiser can capture results** - Result recording functionality operational
+- ✅ **Participant can view own results** - Result retrieval for participants verified
+- ✅ **All Part 2 unit tests pass** - Comprehensive unit test suite passing successfully
+
+### Test Evidence
+
+Detailed test results, screenshots, and validation evidence are available in:
+📄 **[docs/api-test-results-evidence.pdf](docs/api-test-results-evidence.pdf)**
+
 ## GitHub Actions / CI
 
 GitHub Actions is used to automatically validate the required repository structure whenever changes are pushed to the repository or a pull request is created.

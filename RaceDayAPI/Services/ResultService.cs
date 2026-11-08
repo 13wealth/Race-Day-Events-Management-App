@@ -16,47 +16,95 @@ namespace RaceDay.API.Services
             _authHelper = authHelper;
         }
 
+        /*
+         * Records a result for a completed enrollment.
+         * Retrieves the logged-in organiser and verifies ownership of the event.
+         * Finds the enrollment and associated event, then creates a result record.
+         * Returns a ResultCreateResponse with result details and 201 status code on success.
+         * Returns error responses with appropriate status codes (404, 403, 400) for authorization or validation failures.
+         */
         public ResultCreateResponse RecordResult(int enrolmentId, ResultRequest request)
         {
+            // Get the logged-in organiser from the session and authentication helper
             Organiser organiser = _authHelper.GetLoggedInOrganiser();
-            if (organiser == null)
+            if (organiser == null)                                                      // Check if user is not an organiser
             {
-                return new ResultCreateResponse { Error = "Organiser profile not found.", StatusCode = 404 };
+                ResultCreateResponse organiserErrorResponse = new ResultCreateResponse();
+                organiserErrorResponse.Error = "Organiser profile not found.";
+                organiserErrorResponse.StatusCode = 404;
+                return organiserErrorResponse;
             }
 
-            Enrollment enrollment = _db.Enrollments.FirstOrDefault(en => en.EnrollmentId == enrolmentId);
-            if (enrollment == null)
+            // Search for the enrollment record by its enrollment ID
+            Enrollment enrollment = null;                                               // Initialize enrollment to null
+            foreach (Enrollment en in _db.Enrollments)
             {
-                return new ResultCreateResponse { Error = "Enrolment not found.", StatusCode = 404 };
+                if (en.EnrollmentId == enrolmentId)                                     // Check if enrollment ID matches
+                {
+                    enrollment = en;                                                    // Found the enrollment
+                    break;                                                              // Exit the loop immediately
+                }
             }
 
-            RaceEvent ev = _db.Events.FirstOrDefault(e => e.EventId == enrollment.EventId);
-            if (ev == null)
+            if (enrollment == null)                                                     // If no enrollment was found with that ID
             {
-                return new ResultCreateResponse { Error = "Event not found.", StatusCode = 404 };
+                ResultCreateResponse enrollmentErrorResponse = new ResultCreateResponse();
+                enrollmentErrorResponse.Error = "Enrolment not found.";
+                enrollmentErrorResponse.StatusCode = 404;
+                return enrollmentErrorResponse;
             }
 
-            if (ev.OrganiserId != organiser.OrganiserId)
+            // Search for the event associated with the enrollment
+            RaceEvent ev = null;                                                        // Initialize event to null
+            foreach (RaceEvent e in _db.Events)
             {
-                return new ResultCreateResponse { Error = "You can only record results for your own events.", StatusCode = 403 };
+                if (e.EventId == enrollment.EventId)                                    // Check if event ID matches enrollment's event ID
+                {
+                    ev = e;                                                             // Found the event
+                    break;                                                              // Exit the loop immediately
+                }
             }
 
-            RaceResult existing = _db.Results.FirstOrDefault(r => r.EnrollmentId == enrolmentId);
-            if (existing != null)
+            if (ev == null)                                                             // If no event was found
             {
-                return new ResultCreateResponse { Error = "A result is already recorded for this enrolment.", StatusCode = 409 };
+                ResultCreateResponse eventErrorResponse = new ResultCreateResponse();
+                eventErrorResponse.Error = "Event not found.";
+                eventErrorResponse.StatusCode = 404;
+                return eventErrorResponse;
             }
 
-            if (request.FinishTime < request.StartTime)
+            /*
+             * Verify that the logged-in organiser is the owner of the event.
+             * This prevents organisers from recording results for other organisers' events.
+             */
+            if (ev.OrganiserId != organiser.OrganiserId)                               // Check if organiser does not own this event
             {
-                return new ResultCreateResponse { Error = "Finish time cannot be before start time.", StatusCode = 400 };
+                ResultCreateResponse forbiddenResponse = new ResultCreateResponse();
+                forbiddenResponse.Error = "You can only record results for your own events.";
+                forbiddenResponse.StatusCode = 403;
+                return forbiddenResponse;
             }
 
-            if (request.Position < 1)
+            // Check if a result already exists for this enrollment
+            RaceResult existing = null;                                                 // Initialize existing result to null
+            foreach (RaceResult r in _db.Results)
             {
-                return new ResultCreateResponse { Error = "Position must be 1 or more.", StatusCode = 400 };
+                if (r.EnrollmentId == enrolmentId)                                      // Check if result exists for this enrollment
+                {
+                    existing = r;                                                       // Found existing result
+                    break;                                                              // Exit the loop immediately
+                }
             }
 
+            if (existing != null)                                                       // If a result already exists for this enrollment
+            {
+                ResultCreateResponse alreadyExistsResponse = new ResultCreateResponse();
+                alreadyExistsResponse.Error = "A result is already recorded for this enrolment.";
+                alreadyExistsResponse.StatusCode = 409;
+                return alreadyExistsResponse;
+            }
+
+            // Create a new result record for the enrollment
             RaceResult result = new RaceResult();
             result.EnrollmentId = enrolmentId;
             result.StartTime = request.StartTime;
@@ -64,54 +112,114 @@ namespace RaceDay.API.Services
             result.Position = request.Position;
             result.CreatedAt = DateTime.UtcNow;
 
+            // Add the new result to the database and save changes
             _db.Results.Add(result);
             _db.SaveChanges();
 
+            // Create success response with the created result details
             ResultCreateResponse response = new ResultCreateResponse();
             response.ResultsId = result.ResultsId;
             response.EnrollmentId = result.EnrollmentId;
-            response.StartTime = result.StartTime;
-            response.FinishTime = result.FinishTime;
             response.Position = result.Position;
             response.StatusCode = 201;
 
             return response;
         }
 
+        /*
+         * Retrieves a specific result by its result ID.
+         * Verifies that the logged-in user has permission to view the result based on their role.
+         * Organisers can view results for their own events.
+         * Participants can view results for their own enrollments.
+         * Returns a ResultDetailResponse with result details and 200 status code on success.
+         * Returns error responses with appropriate status codes (404, 403) for validation or authorization failures.
+         */
         public ResultDetailResponse GetResult(int resultId)
         {
-            RaceResult found = _db.Results.FirstOrDefault(r => r.ResultsId == resultId);
-            if (found == null)
+            // Search for the result record by its result ID
+            RaceResult found = null;                                                    // Initialize found result to null
+            foreach (RaceResult r in _db.Results)
             {
-                return new ResultDetailResponse { Error = "Result not found.", StatusCode = 404 };
+                if (r.ResultsId == resultId)                                            // Check if result ID matches
+                {
+                    found = r;                                                          // Found the result
+                    break;                                                              // Exit the loop immediately
+                }
             }
 
-            Enrollment enrollment = _db.Enrollments.FirstOrDefault(en => en.EnrollmentId == found.EnrollmentId);
+            if (found == null)                                                          // If no result was found with that ID
+            {
+                ResultDetailResponse notFoundResponse = new ResultDetailResponse();
+                notFoundResponse.Error = "Result not found.";
+                notFoundResponse.StatusCode = 404;
+                return notFoundResponse;
+            }
 
+            // Search for the enrollment associated with this result
+            Enrollment enrollment = null;                                               // Initialize enrollment to null
+            foreach (Enrollment en in _db.Enrollments)
+            {
+                if (en.EnrollmentId == found.EnrollmentId)                              // Check if enrollment ID matches
+                {
+                    enrollment = en;                                                    // Found the enrollment
+                    break;                                                              // Exit the loop immediately
+                }
+            }
+
+            // Retrieve the logged-in user's role for authorization checks
             string role = _authHelper.GetUserRole();
 
-            // Participants may only see their own results
-            if (role == "participant")
+            /*
+             * Participants may only see their own results.
+             * Verify that the logged-in participant is the owner of the enrollment.
+             * If not, return 403 Forbidden.
+             */
+            if (role == "participant")                                                  // If user is a participant
             {
+                // Get the logged-in participant and check if they own this enrollment
                 Participant participant = _authHelper.GetLoggedInParticipant();
-                if (participant == null || enrollment.ParticipantId != participant.ParticipantId)
+                if (participant == null || enrollment.ParticipantId != participant.ParticipantId)  // Check if participant does not own this enrollment
                 {
-                    return new ResultDetailResponse { Error = "You can only view your own results.", StatusCode = 403 };
+                    ResultDetailResponse forbiddenResponse = new ResultDetailResponse();
+                    forbiddenResponse.Error = "You can only view your own results.";
+                    forbiddenResponse.StatusCode = 403;
+                    return forbiddenResponse;
                 }
             }
 
-            // Organisers may only see results for their own events
-            if (role == "organiser")
+            /*
+             * Organisers may only see results for their own events.
+             * Search for the event and verify ownership before allowing result viewing.
+             * If not, return 403 Forbidden.
+             */
+            if (role == "organiser")                                                    // If user is an organiser
             {
+                // Get the logged-in organiser and find the associated event
                 Organiser organiser = _authHelper.GetLoggedInOrganiser();
-                RaceEvent ev = _db.Events.FirstOrDefault(e => e.EventId == enrollment.EventId);
-
-                if (organiser == null || ev == null || ev.OrganiserId != organiser.OrganiserId)
+                RaceEvent ev = null;                                                    // Initialize event to null
+                foreach (RaceEvent e in _db.Events)
                 {
-                    return new ResultDetailResponse { Error = "You can only view results for your own events.", StatusCode = 403 };
+                    if (e.EventId == enrollment.EventId)                                // Check if event ID matches enrollment's event ID
+                    {
+                        ev = e;                                                         // Found the event
+                        break;                                                          // Exit the loop immediately
+                    }
+                }
+
+                /*
+                 * Verify that the organiser is the owner of the event.
+                 * If organiser or event is not found, or if organiser does not own the event, deny access.
+                 */
+                if (organiser == null || ev == null || ev.OrganiserId != organiser.OrganiserId)  // Check if organiser does not own this event
+                {
+                    ResultDetailResponse eventForbiddenResponse = new ResultDetailResponse();
+                    eventForbiddenResponse.Error = "You can only view results for your own events.";
+                    eventForbiddenResponse.StatusCode = 403;
+                    return eventForbiddenResponse;
                 }
             }
 
+            // Create success response with the result details
             ResultDetailResponse response = new ResultDetailResponse();
             response.ResultsId = found.ResultsId;
             response.EnrollmentId = found.EnrollmentId;
@@ -122,27 +230,27 @@ namespace RaceDay.API.Services
 
             return response;
         }
-    }
 
-    public class ResultCreateResponse
-    {
-        public int ResultsId { get; set; }
-        public int EnrollmentId { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime FinishTime { get; set; }
-        public int Position { get; set; }
-        public string Error { get; set; }
-        public int StatusCode { get; set; }
-    }
+        public class ResultCreateResponse
+        {
+            public int ResultsId { get; set; }
+            public int EnrollmentId { get; set; }
+            public DateTime StartTime { get; set; }
+            public DateTime FinishTime { get; set; }
+            public int Position { get; set; }
+            public string Error { get; set; }
+            public int StatusCode { get; set; }
+        }
 
-    public class ResultDetailResponse
-    {
-        public int ResultsId { get; set; }
-        public int EnrollmentId { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime FinishTime { get; set; }
-        public int Position { get; set; }
-        public string Error { get; set; }
-        public int StatusCode { get; set; }
+        public class ResultDetailResponse
+        {
+            public int ResultsId { get; set; }
+            public int EnrollmentId { get; set; }
+            public DateTime StartTime { get; set; }
+            public DateTime FinishTime { get; set; }
+            public int Position { get; set; }
+            public string Error { get; set; }
+            public int StatusCode { get; set; }
+        }
     }
 }

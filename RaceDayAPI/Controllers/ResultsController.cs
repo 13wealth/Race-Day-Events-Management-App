@@ -5,17 +5,38 @@ using RaceDay.API.Services;
 
 namespace RaceDay.API.Controllers
 {
+    /// <summary>
+    /// Manages race results.
+    /// Provides endpoints for recording and retrieving participant race results.
+    /// </summary>
     [ApiController]
     [Route("api")]
     public class ResultsController : ControllerBase
     {
         private readonly ResultService _resultService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ResultsController"/> class.
+        /// </summary>
+        /// <param name="resultService">The result service.</param>
         public ResultsController(ResultService resultService)
         {
             _resultService = resultService;
         }
 
+        /// <summary>
+        /// Records the race result for a participant's enrollment.
+        /// Only event organizers can perform this action.
+        /// </summary>
+        /// <param name="enrolmentId">The ID of the enrollment.</param>
+        /// <param name="request">The result request containing start time, finish time, and position.</param>
+        /// <returns>
+        /// A 201 Created response with the result details on success,
+        /// a 400 Bad Request if validation fails,
+        /// a 403 Forbidden if user is not the event organizer,
+        /// a 404 Not Found if the enrollment doesn't exist,
+        /// or a 409 Conflict if a result already exists for the enrollment.
+        /// </returns>
         [HttpPost("enrolments/{enrolmentId}/result")]
         [RequireRole("organiser")]
         [ProducesResponseType(201)]
@@ -58,6 +79,15 @@ namespace RaceDay.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Retrieves a specific race result by ID.
+        /// </summary>
+        /// <param name="resultId">The ID of the result.</param>
+        /// <returns>
+        /// A 200 OK response with the result details,
+        /// a 403 Forbidden if user does not have access to the result,
+        /// or a 404 Not Found if the result doesn't exist.
+        /// </returns>
         [HttpGet("results/{resultId}")]
         [RequireRole]
         [ProducesResponseType(200)]

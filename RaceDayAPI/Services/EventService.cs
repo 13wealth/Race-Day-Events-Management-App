@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using RaceDay.API.Data;
 using RaceDay.API.DTO;
 using RaceDay.API.Models;
@@ -19,26 +18,48 @@ namespace RaceDay.API.Services
             _validationHelper = validationHelper;
         }
 
+        /*
+         * Creates a new event record in the database for the logged-in organiser.
+         * Verifies that the logged-in user is an organiser before allowing event creation.
+         * Validates the event type and status using ValidationHelper methods.
+         * Assigns the current organiser as the owner of the new event.
+         * Returns an EventCreateResponse with created event details and 201 status code on success.
+         * Returns error responses with appropriate status codes (404, 400, 403) for validation or authorization failures.
+         */
         public EventCreateResponse CreateEvent(EventRequest request)
         {
-            Organiser organiser = _authHelper.GetLoggedInOrganiser();
-            if (organiser == null)
+            
+            Organiser organiser = _authHelper.GetLoggedInOrganiser();                   // Get the logged-in organiser from the session and authentication helper
+            
+            if (organiser == null)                                                      // Check if user is not an organiser
             {
-                return new EventCreateResponse { Error = "Organiser profile not found.", StatusCode = 404 };
+                EventCreateResponse organiserErrorResponse = new EventCreateResponse();
+                organiserErrorResponse.Error = "Organiser profile not found.";
+                organiserErrorResponse.StatusCode = 404;
+                return organiserErrorResponse;
             }
 
+            // Validate the event type provided in the request
             string eventTypeError = ValidationHelper.ValidateEventType(request.EventType);
-            if (eventTypeError != null)
+            if (eventTypeError != null)                                                 // Check if event type validation failed
             {
-                return new EventCreateResponse { Error = eventTypeError, StatusCode = 400 };
+                EventCreateResponse typeErrorResponse = new EventCreateResponse();
+                typeErrorResponse.Error = eventTypeError;
+                typeErrorResponse.StatusCode = 400;
+                return typeErrorResponse;
             }
 
+            // Validate the event status provided in the request
             string statusError = ValidationHelper.ValidateEventStatus(request.Status);
-            if (statusError != null)
+            if (statusError != null)                                                    // Check if status validation failed
             {
-                return new EventCreateResponse { Error = statusError, StatusCode = 400 };
+                EventCreateResponse statusErrorResponse = new EventCreateResponse();
+                statusErrorResponse.Error = statusError;
+                statusErrorResponse.StatusCode = 400;
+                return statusErrorResponse;
             }
 
+            // Create a new event object with the request details and assign it to the organiser
             EventModel newEvent = new EventModel();
             newEvent.OrganiserId = organiser.OrganiserId;
             newEvent.EventName = request.EventName;
@@ -52,9 +73,11 @@ namespace RaceDay.API.Services
             newEvent.Status = request.Status;
             newEvent.CreatedAt = DateTime.UtcNow;
 
+            // Add the new event to the database and save changes
             _db.Events.Add(newEvent);
             _db.SaveChanges();
 
+            // Create success response with the created event details
             EventCreateResponse response = new EventCreateResponse();
             response.EventId = newEvent.EventId;
             response.EventName = newEvent.EventName;
@@ -71,13 +94,29 @@ namespace RaceDay.API.Services
             return response;
         }
 
+        /*
+         * Retrieves all events from the database.
+         * Returns a list of event objects with basic event information.
+         * Converts each event to an anonymous object format for API response.
+         * Returns an EventListResponse with 200 status code on success.
+         */
         public EventListResponse GetEvents()
         {
-            List<EventModel> events = _db.Events.ToList();
+            // Retrieve all events from the database and add them to a list
+            List<EventModel> events = new List<EventModel>();
+            foreach (EventModel e in _db.Events)
+            {
+                events.Add(e);
+            }
 
+            // Create response object and initialize the events list
             EventListResponse response = new EventListResponse();
             response.Events = new List<object>();
 
+            /*
+             * Iterate through all events and convert each to an anonymous object format.
+             * This format is used for the API response to format field names appropriately.
+             */
             foreach (EventModel e in events)
             {
                 object eventObj = new
@@ -100,15 +139,34 @@ namespace RaceDay.API.Services
             return response;
         }
 
+        /*
+         * Retrieves a specific event by its event ID.
+         * Searches the database for the event matching the provided ID.
+         * Returns an EventDetailResponse with event details and 200 status code on success.
+         * Returns error response with 404 status code if event is not found.
+         */
         public EventDetailResponse GetEvent(int eventId)
         {
-            EventModel found = _db.Events.FirstOrDefault(e => e.EventId == eventId);
-
-            if (found == null)
+            // Search for an event with the matching event ID in the database
+            EventModel found = null;                                                    // Initialize found event to null
+            foreach (EventModel e in _db.Events)
             {
-                return new EventDetailResponse { Error = "Event not found.", StatusCode = 404 };
+                if (e.EventId == eventId)                                               // Check if event ID matches
+                {
+                    found = e;                                                          // Found the event
+                    break;                                                              // Exit the loop immediately
+                }
             }
 
+            if (found == null)                                                          // If no event was found with that ID
+            {
+                EventDetailResponse notFoundResponse = new EventDetailResponse();
+                notFoundResponse.Error = "Event not found.";
+                notFoundResponse.StatusCode = 404;
+                return notFoundResponse;
+            }
+
+            // Create success response with the event details
             EventDetailResponse response = new EventDetailResponse();
             response.EventId = found.EventId;
             response.EventName = found.EventName;
@@ -125,37 +183,78 @@ namespace RaceDay.API.Services
             return response;
         }
 
+        /*
+         * Updates an existing event with new information.
+         * Verifies that the logged-in user is an organiser and owns the event before allowing updates.
+         * Validates the new event type and status using ValidationHelper methods.
+         * Updates all event fields with the provided request data.
+         * Returns an EventUpdateResponse with updated event details and 200 status code on success.
+         * Returns error responses with appropriate status codes (404, 403, 400) for authorization or validation failures.
+         */
         public EventUpdateResponse UpdateEvent(int eventId, EventRequest request)
         {
+            // Get the logged-in organiser from the session and authentication helper
             Organiser organiser = _authHelper.GetLoggedInOrganiser();
-            if (organiser == null)
+            if (organiser == null)                                                      // Check if user is not an organiser
             {
-                return new EventUpdateResponse { Error = "Organiser profile not found.", StatusCode = 404 };
+                EventUpdateResponse organiserErrorResponse = new EventUpdateResponse();
+                organiserErrorResponse.Error = "Organiser profile not found.";
+                organiserErrorResponse.StatusCode = 404;
+                return organiserErrorResponse;
             }
 
-            EventModel found = _db.Events.FirstOrDefault(e => e.EventId == eventId);
-            if (found == null)
+            // Search for the event to be updated by its event ID
+            EventModel found = null;                                                    // Initialize found event to null
+            foreach (EventModel e in _db.Events)
             {
-                return new EventUpdateResponse { Error = "Event not found.", StatusCode = 404 };
+                if (e.EventId == eventId)                                               // Check if event ID matches
+                {
+                    found = e;                                                          // Found the event
+                    break;                                                              // Exit the loop immediately
+                }
             }
 
-            if (found.OrganiserId != organiser.OrganiserId)
+            if (found == null)                                                          // If no event was found with that ID
             {
-                return new EventUpdateResponse { Error = "You can only change your own events.", StatusCode = 403 };
+                EventUpdateResponse notFoundResponse = new EventUpdateResponse();
+                notFoundResponse.Error = "Event not found.";
+                notFoundResponse.StatusCode = 404;
+                return notFoundResponse;
             }
 
+            /*
+             * Verify that the logged-in organiser is the owner of the event.
+             * This prevents organisers from updating other organisers' events.
+             */
+            if (found.OrganiserId != organiser.OrganiserId)                            // Check if organiser does not own this event
+            {
+                EventUpdateResponse forbiddenResponse = new EventUpdateResponse();
+                forbiddenResponse.Error = "You can only change your own events.";
+                forbiddenResponse.StatusCode = 403;
+                return forbiddenResponse;
+            }
+
+            // Validate the new event type provided in the request
             string eventTypeError = ValidationHelper.ValidateEventType(request.EventType);
-            if (eventTypeError != null)
+            if (eventTypeError != null)                                                 // Check if event type validation failed
             {
-                return new EventUpdateResponse { Error = eventTypeError, StatusCode = 400 };
+                EventUpdateResponse typeErrorResponse = new EventUpdateResponse();
+                typeErrorResponse.Error = eventTypeError;
+                typeErrorResponse.StatusCode = 400;
+                return typeErrorResponse;
             }
 
+            // Validate the new event status provided in the request
             string statusError = ValidationHelper.ValidateEventStatus(request.Status);
-            if (statusError != null)
+            if (statusError != null)                                                    // Check if status validation failed
             {
-                return new EventUpdateResponse { Error = statusError, StatusCode = 400 };
+                EventUpdateResponse statusErrorResponse = new EventUpdateResponse();
+                statusErrorResponse.Error = statusError;
+                statusErrorResponse.StatusCode = 400;
+                return statusErrorResponse;
             }
 
+            // Update all event fields with the new values from the request
             found.EventName = request.EventName;
             found.Description = request.Description;
             found.Location = request.Location;
@@ -167,8 +266,10 @@ namespace RaceDay.API.Services
             found.Status = request.Status;
             found.UpdatedAt = DateTime.UtcNow;
 
+            // Save changes to the database
             _db.SaveChanges();
 
+            // Create success response with the updated event details
             EventUpdateResponse response = new EventUpdateResponse();
             response.EventId = found.EventId;
             response.EventName = found.EventName;
@@ -185,91 +286,124 @@ namespace RaceDay.API.Services
             return response;
         }
 
+        /*
+         * Deletes an event from the database.
+         * Verifies that the logged-in user is an organiser and owns the event before allowing deletion.
+         * Removes the event record from the database permanently.
+         * Returns an EventDeleteResponse with 204 status code (No Content) on success.
+         * Returns error responses with appropriate status codes (404, 403) for authorization or validation failures.
+         */
         public EventDeleteResponse DeleteEvent(int eventId)
         {
+            // Get the logged-in organiser from the session and authentication helper
             Organiser organiser = _authHelper.GetLoggedInOrganiser();
-            if (organiser == null)
+            if (organiser == null)                                                      // Check if user is not an organiser
             {
-                return new EventDeleteResponse { Error = "Organiser profile not found.", StatusCode = 404 };
+                EventDeleteResponse organiserErrorResponse = new EventDeleteResponse();
+                organiserErrorResponse.Error = "Organiser profile not found.";
+                organiserErrorResponse.StatusCode = 404;
+                return organiserErrorResponse;
             }
 
-            EventModel found = _db.Events.FirstOrDefault(e => e.EventId == eventId);
-            if (found == null)
+            // Search for the event to be deleted by its event ID
+            EventModel found = null;                                                    // Initialize found event to null
+            foreach (EventModel e in _db.Events)
             {
-                return new EventDeleteResponse { Error = "Event not found.", StatusCode = 404 };
+                if (e.EventId == eventId)                                               // Check if event ID matches
+                {
+                    found = e;                                                          // Found the event
+                    break;                                                              // Exit the loop immediately
+                }
             }
 
-            if (found.OrganiserId != organiser.OrganiserId)
+            if (found == null)                                                          // If no event was found with that ID
             {
-                return new EventDeleteResponse { Error = "You can only delete your own events.", StatusCode = 403 };
+                EventDeleteResponse notFoundResponse = new EventDeleteResponse();
+                notFoundResponse.Error = "Event not found.";
+                notFoundResponse.StatusCode = 404;
+                return notFoundResponse;
             }
 
+            /*
+             * Verify that the logged-in organiser is the owner of the event.
+             * This prevents organisers from deleting other organisers' events.
+             */
+            if (found.OrganiserId != organiser.OrganiserId)                            // Check if organiser does not own this event
+            {
+                EventDeleteResponse forbiddenResponse = new EventDeleteResponse();
+                forbiddenResponse.Error = "You can only delete your own events.";
+                forbiddenResponse.StatusCode = 403;
+                return forbiddenResponse;
+            }
+
+            // Remove the event from the database and save changes
             _db.Events.Remove(found);
             _db.SaveChanges();
 
+            // Create response with 204 No Content status code
             EventDeleteResponse response = new EventDeleteResponse();
             response.StatusCode = 204;
             return response;
         }
-    }
 
-    public class EventCreateResponse
-    {
-        public int EventId { get; set; }
-        public string EventName { get; set; }
-        public string Description { get; set; }
-        public string Location { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-        public DateTime EventDate { get; set; }
-        public double Distance { get; set; }
-        public string EventType { get; set; }
-        public string Status { get; set; }
-        public string Error { get; set; }
-        public int StatusCode { get; set; }
-    }
+        public class EventCreateResponse
+        {
+            public int EventId { get; set; }
+            public string EventName { get; set; }
+            public string Description { get; set; }
+            public string Location { get; set; }
+            public decimal Latitude { get; set; }
+            public decimal Longitude { get; set; }
+            public DateTime EventDate { get; set; }
+            public decimal Distance { get; set; }
+            public string EventType { get; set; }
+            public string Status { get; set; }
+            public string Error { get; set; }
+            public int StatusCode { get; set; }
+        }
 
-    public class EventListResponse
-    {
-        public List<object> Events { get; set; }
-        public int StatusCode { get; set; }
-    }
+        public class EventListResponse
+        {
+            public List<object> Events { get; set; }
+            public int StatusCode { get; set; }
+        }
 
-    public class EventDetailResponse
-    {
-        public int EventId { get; set; }
-        public string EventName { get; set; }
-        public string Description { get; set; }
-        public string Location { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-        public DateTime EventDate { get; set; }
-        public double Distance { get; set; }
-        public string EventType { get; set; }
-        public string Status { get; set; }
-        public string Error { get; set; }
-        public int StatusCode { get; set; }
-    }
+        public class EventDetailResponse
+        {
+            public int EventId { get; set; }
+            public string EventName { get; set; }
+            public string Description { get; set; }
+            public string Location { get; set; }
+            public decimal Latitude { get; set; }
+            public decimal Longitude { get; set; }
+            public DateTime EventDate { get; set; }
+            public decimal Distance { get; set; }
+            public string EventType { get; set; }
+            public string Status { get; set; }
+            public string Error { get; set; }
+            public int StatusCode { get; set; }
+        }
 
-    public class EventUpdateResponse
-    {
-        public int EventId { get; set; }
-        public string EventName { get; set; }
-        public string Description { get; set; }
-        public string Location { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-        public DateTime EventDate { get; set; }
-        public double Distance { get; set; }
-        public string EventType { get; set; }
-        public string Status { get; set; }
-        public string Error { get; set; }
-        public int StatusCode { get; set; }
-    }
+        public class EventUpdateResponse
+        {
+            public int EventId { get; set; }
+            public string EventName { get; set; }
+            public string Description { get; set; }
+            public string Location { get; set; }
+            public decimal Latitude { get; set; }
+            public decimal Longitude { get; set; }
+            public DateTime EventDate { get; set; }
+            public decimal Distance { get; set; }
+            public string EventType { get; set; }
+            public string Status { get; set; }
+            public string Error { get; set; }
+            public int StatusCode { get; set; }
+        }
 
-    public class EventDeleteResponse
-    {
-        public string Error { get; set; }
-        public int StatusCode { get; set; }
+        public class EventDeleteResponse
+        {
+            public string Error { get; set; }
+            public int StatusCode { get; set; }
+        }
     }
 }

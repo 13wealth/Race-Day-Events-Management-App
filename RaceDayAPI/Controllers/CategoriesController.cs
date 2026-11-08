@@ -5,17 +5,37 @@ using RaceDay.API.Services;
 
 namespace RaceDay.API.Controllers
 {
+    /// <summary>
+    /// Manages race categories within events.
+    /// Provides endpoints for creating, retrieving, updating, and deleting categories.
+    /// </summary>
     [ApiController]
     [Route("api/events/{eventId}/categories")]
     public class CategoriesController : ControllerBase
     {
         private readonly CategoryService _categoryService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CategoriesController"/> class.
+        /// </summary>
+        /// <param name="categoryService">The category service.</param>
         public CategoriesController(CategoryService categoryService)
         {
             _categoryService = categoryService;
         }
 
+        /// <summary>
+        /// Creates a new category for a specific event.
+        /// Only event organizers can perform this action.
+        /// </summary>
+        /// <param name="eventId">The ID of the event.</param>
+        /// <param name="request">The category request containing category details.</param>
+        /// <returns>
+        /// A 201 Created response with the category details on success,
+        /// a 400 Bad Request if validation fails,
+        /// a 403 Forbidden if user is not the event organizer,
+        /// or a 404 Not Found if the event doesn't exist.
+        /// </returns>
         [HttpPost]
         [RequireRole("organiser")]
         [ProducesResponseType(201)]
@@ -49,6 +69,14 @@ namespace RaceDay.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Retrieves all categories for a specific event.
+        /// </summary>
+        /// <param name="eventId">The ID of the event.</param>
+        /// <returns>
+        /// A 200 OK response with the list of categories,
+        /// or a 404 Not Found if the event doesn't exist.
+        /// </returns>
         [HttpGet]
         [RequireRole]
         [ProducesResponseType(200)]
@@ -66,6 +94,15 @@ namespace RaceDay.API.Controllers
             return Ok(response.Categories);
         }
 
+        /// <summary>
+        /// Retrieves a specific category by ID.
+        /// </summary>
+        /// <param name="eventId">The ID of the event.</param>
+        /// <param name="categoryId">The ID of the category.</param>
+        /// <returns>
+        /// A 200 OK response with the category details,
+        /// or a 404 Not Found if the category doesn't exist.
+        /// </returns>
         [HttpGet("{categoryId}")]
         [RequireRole]
         [ProducesResponseType(200)]
@@ -88,6 +125,19 @@ namespace RaceDay.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Updates an existing category.
+        /// Only event organizers can perform this action.
+        /// </summary>
+        /// <param name="eventId">The ID of the event.</param>
+        /// <param name="categoryId">The ID of the category to update.</param>
+        /// <param name="request">The category request containing updated details.</param>
+        /// <returns>
+        /// A 200 OK response with the updated category details on success,
+        /// a 400 Bad Request if validation fails,
+        /// a 403 Forbidden if user is not the event organizer,
+        /// or a 404 Not Found if the category doesn't exist.
+        /// </returns>
         [HttpPut("{categoryId}")]
         [RequireRole("organiser")]
         [ProducesResponseType(200)]
@@ -121,6 +171,17 @@ namespace RaceDay.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Deletes a category from an event.
+        /// Only event organizers can perform this action.
+        /// </summary>
+        /// <param name="eventId">The ID of the event.</param>
+        /// <param name="categoryId">The ID of the category to delete.</param>
+        /// <returns>
+        /// A 204 No Content response on successful deletion,
+        /// a 403 Forbidden if user is not the event organizer,
+        /// or a 404 Not Found if the category doesn't exist.
+        /// </returns>
         [HttpDelete("{categoryId}")]
         [RequireRole("organiser")]
         [ProducesResponseType(204)]

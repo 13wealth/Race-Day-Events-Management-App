@@ -4,15 +4,20 @@ namespace RaceDay.API.Services
 {
     public class ValidationHelper
     {
+        /*
+         * Validates the user's role by checking whether it is either "organiser" or "participant"
+         * Checks if role exsist, if not returns an error
+         */
         public static string ValidateRole(string role)
         {
-            string roleLower = role.ToLower();
-            if (roleLower != "organiser" && roleLower != "participant")
+            string roleLower = role.ToLower();                                          // Converts the role to lowercase
+            if (roleLower != "organiser" && roleLower != "participant") 
             {
                 return "Role must be 'organiser' or 'participant'.";
             }
             return null;
         }
+
 
         public static string ValidatePassword(string password)
         {
@@ -81,16 +86,8 @@ namespace RaceDay.API.Services
             return null;
         }
 
-        public static string ValidateEnrollmentRequest(EnrollmentsDTO request)
+        public static string ValidateEnrollmentRequest(EnrollmentRequest request)
         {
-            if (request.ParticipantId <= 0)
-            {
-                return "Invalid participant ID.";
-            }
-            if (request.EventId <= 0)
-            {
-                return "Invalid event ID.";
-            }
             if (request.CategoryId <= 0)
             {
                 return "Invalid category ID.";
