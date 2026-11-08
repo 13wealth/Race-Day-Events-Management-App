@@ -1,4 +1,5 @@
-﻿/***************************************************************************************
+﻿
+/***************************************************************************************
  *                                  RACE DAY API CLIENT                                *
  * Handles communication between the MVC application and the Part 2 RaceDay API.       *
  * Sends HTTP requests, manages API session cookies, and processes API responses.      *
