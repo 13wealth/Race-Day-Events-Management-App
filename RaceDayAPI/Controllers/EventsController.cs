@@ -1,12 +1,7 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RaceDay.API.Data;
 using RaceDay.API.DTO;
-using RaceDay.API.Models;
 using RaceDay.API.Security;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using EventModel = RaceDay.API.Models.RaceEvent;
+using RaceDay.API.Services;
 
 namespace RaceDay.API.Controllers
 {
@@ -14,75 +9,13 @@ namespace RaceDay.API.Controllers
     [Route("api/events")]
     public class EventsController : ControllerBase
     {
-        private readonly RaceDayContext _db;
+        private readonly EventService _eventService;
 
-        public EventsController(RaceDayContext db)
+        public EventsController(EventService eventService)
         {
-            _db = db;
+            _eventService = eventService;
         }
 
-        /*
-         * Finds the organiser record for the logged-in user.
-         * Returns null if no organiser record exists.
-         */
-        private Organiser? GetLoggedInOrganiser()
-        {
-            int? userId = HttpContext.Session.GetInt32("UserId");
-            if (userId == null)
-            {
-                return null;
-            }
-
-            Organiser? organiser = (from o in _db.Organisers
-                                   join p in _db.Profiles on o.ProfileId equals p.ProfileId
-                                   where p.UserId == userId
-                                   select o).FirstOrDefault();
-
-            return organiser;
-        }
-
-        /*
-         * Checks the event fields. Returns an error message, or null if all fields are valid.
-         */
-        private string CheckEventFields(EventRequest request)
-        {
-            if (request.EventType != "run" && request.EventType != "walk" && request.EventType != "cycle")
-            {
-                return "Event type must be run, walk or cycle.";
-            }
-
-            if (request.Status != "scheduled" && request.Status != "ongoing"
-                && request.Status != "completed" && request.Status != "cancelled")
-            {
-                return "Status must be scheduled, ongoing, completed or cancelled.";
-            }
-
-            return null;
-        }
-
-        /* 
-         * Builds the JSON shape returned for one event
-         */
-        private object EventToResponse(EventModel e)
-        {
-            return new
-            {
-                event_id = e.EventId,
-                event_name = e.EventName,
-                description = e.Description,
-                location = e.Location,
-                latitude = e.Latitude,
-                longitude = e.Longitude,
-                event_date = e.EventDate,
-                distance = e.Distance,
-                event_type = e.EventType,
-                status = e.Status
-            };
-        }
-
-        /// <summary>
-        /// Creates an event owned by the logged-in organiser. Organiser only.
-        /// </summary>
         [HttpPost]
         [RequireRole("organiser")]
         [ProducesResponseType(201)]
@@ -92,60 +25,43 @@ namespace RaceDay.API.Controllers
         [ProducesResponseType(404)]
         public IActionResult CreateEvent([FromBody] EventRequest request)
         {
-            Organiser? organiser = GetLoggedInOrganiser();
-            if (organiser == null)
+            EventService.EventCreateResponse response = _eventService.CreateEvent(request);
+
+            if (response.StatusCode == 400)
             {
-                return NotFound(new { error = "Organiser profile not found." });
+                return BadRequest(new { error = response.Error });
             }
 
-            string problem = CheckEventFields(request);
-            if (problem != null)
+            if (response.StatusCode == 404)
             {
-                return BadRequest(new { error = problem });
+                return NotFound(new { error = response.Error });
             }
 
-            EventModel newEvent = new EventModel();
-            newEvent.OrganiserId = organiser!.OrganiserId;
-            newEvent.EventName = request.EventName;
-            newEvent.Description = request.Description;
-            newEvent.Location = request.Location;
-            newEvent.Latitude = request.Latitude;
-            newEvent.Longitude = request.Longitude;
-            newEvent.EventDate = request.EventDate;
-            newEvent.Distance = request.Distance;
-            newEvent.EventType = request.EventType;
-            newEvent.Status = request.Status;
-            newEvent.CreatedAt = DateTime.UtcNow;
-
-            _db.Events.Add(newEvent);
-            _db.SaveChanges();
-
-            return StatusCode(201, EventToResponse(newEvent));
+            return StatusCode(201, new
+            {
+                event_id = response.EventId,
+                event_name = response.EventName,
+                description = response.Description,
+                location = response.Location,
+                latitude = response.Latitude,
+                longitude = response.Longitude,
+                event_date = response.EventDate,
+                distance = response.Distance,
+                event_type = response.EventType,
+                status = response.Status
+            });
         }
 
-        /// <summary>
-        /// Lists all events. Any logged-in user.
-        /// </summary>
         [HttpGet]
         [RequireRole]
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         public IActionResult GetEvents()
         {
-            List<EventModel> events = (from e in _db.Events select e).ToList();
-
-            List<object> result = new List<object>();
-            foreach (EventModel e in events)
-            {
-                result.Add(EventToResponse(e));
-            }
-
-            return Ok(result);
+            EventService.EventListResponse response = _eventService.GetEvents();
+            return Ok(response.Events);
         }
 
-        /// <summary>
-        /// Returns one event by id. Any logged-in user.
-        /// </summary>
         [HttpGet("{eventId}")]
         [RequireRole]
         [ProducesResponseType(200)]
@@ -153,21 +69,28 @@ namespace RaceDay.API.Controllers
         [ProducesResponseType(404)]
         public IActionResult GetEvent(int eventId)
         {
-            EventModel? found = (from e in _db.Events
-                           where e.EventId == eventId
-                           select e).FirstOrDefault();
+            EventService.EventDetailResponse response = _eventService.GetEvent(eventId);
 
-            if (found == null)
+            if (response.StatusCode == 404)
             {
-                return NotFound(new { error = "Event not found." });
+                return NotFound(new { error = response.Error });
             }
 
-            return Ok(EventToResponse(found));
+            return Ok(new
+            {
+                event_id = response.EventId,
+                event_name = response.EventName,
+                description = response.Description,
+                location = response.Location,
+                latitude = response.Latitude,
+                longitude = response.Longitude,
+                event_date = response.EventDate,
+                distance = response.Distance,
+                event_type = response.EventType,
+                status = response.Status
+            });
         }
 
-        /// <summary>
-        /// Updates an event. Only the organiser who owns it.
-        /// </summary>
         [HttpPut("{eventId}")]
         [RequireRole("organiser")]
         [ProducesResponseType(200)]
@@ -177,51 +100,38 @@ namespace RaceDay.API.Controllers
         [ProducesResponseType(404)]
         public IActionResult UpdateEvent(int eventId, [FromBody] EventRequest request)
         {
-            Organiser? organiser = GetLoggedInOrganiser();
-            if (organiser == null)
+            EventService.EventUpdateResponse response = _eventService.UpdateEvent(eventId, request);
+
+            if (response.StatusCode == 400)
             {
-                return NotFound(new { error = "Organiser profile not found." });
+                return BadRequest(new { error = response.Error });
             }
 
-            EventModel? found = (from e in _db.Events
-                           where e.EventId == eventId
-                           select e).FirstOrDefault();
-
-            if (found == null)
+            if (response.StatusCode == 403)
             {
-                return NotFound(new { error = "Event not found." });
+                return StatusCode(403, new { error = response.Error });
             }
 
-            if (found!.OrganiserId != organiser!.OrganiserId)
+            if (response.StatusCode == 404)
             {
-                return StatusCode(403, new { error = "You can only change your own events." });
+                return NotFound(new { error = response.Error });
             }
 
-            string problem = CheckEventFields(request);
-            if (problem != null)
+            return Ok(new
             {
-                return BadRequest(new { error = problem });
-            }
-
-            found.EventName = request.EventName;
-            found.Description = request.Description;
-            found.Location = request.Location;
-            found.Latitude = request.Latitude;
-            found.Longitude = request.Longitude;
-            found.EventDate = request.EventDate;
-            found.Distance = request.Distance;
-            found.EventType = request.EventType;
-            found.Status = request.Status;
-            found.UpdatedAt = DateTime.UtcNow;
-
-            _db.SaveChanges();
-
-            return Ok(EventToResponse(found));
+                event_id = response.EventId,
+                event_name = response.EventName,
+                description = response.Description,
+                location = response.Location,
+                latitude = response.Latitude,
+                longitude = response.Longitude,
+                event_date = response.EventDate,
+                distance = response.Distance,
+                event_type = response.EventType,
+                status = response.Status
+            });
         }
 
-        /// <summary>
-        /// Deletes an event. Only the organiser who owns it.
-        /// </summary>
         [HttpDelete("{eventId}")]
         [RequireRole("organiser")]
         [ProducesResponseType(204)]
@@ -230,28 +140,17 @@ namespace RaceDay.API.Controllers
         [ProducesResponseType(404)]
         public IActionResult DeleteEvent(int eventId)
         {
-            Organiser? organiser = GetLoggedInOrganiser();
-            if (organiser == null)
+            EventService.EventDeleteResponse response = _eventService.DeleteEvent(eventId);
+
+            if (response.StatusCode == 403)
             {
-                return NotFound(new { error = "Organiser profile not found." });
+                return StatusCode(403, new { error = response.Error });
             }
 
-            EventModel? found = (from e in _db.Events
-                           where e.EventId == eventId
-                           select e).FirstOrDefault();
-
-            if (found == null)
+            if (response.StatusCode == 404)
             {
-                return NotFound(new { error = "Event not found." });
+                return NotFound(new { error = response.Error });
             }
-
-            if (found!.OrganiserId != organiser!.OrganiserId)
-            {
-                return StatusCode(403, new { error = "You can only delete your own events." });
-            }
-
-            _db.Events.Remove(found);
-            _db.SaveChanges();
 
             return NoContent();
         }

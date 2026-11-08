@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Session;
 using Microsoft.EntityFrameworkCore;
 using RaceDay.API.Data;
 using RaceDay.API.Models;
+using RaceDay.API.Services;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,15 @@ builder.Services.AddDbContext<RaceDayContext>(ConfigureDatabase);
 builder.Services.AddScoped<IPasswordHasher<RaceDayUser>, PasswordHasher<RaceDayUser>>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(ConfigureSession);
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AuthenticationHelper>();
+builder.Services.AddScoped<ValidationHelper>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<EnrollmentService>();
+builder.Services.AddScoped<ResultService>();
+builder.Services.AddScoped<ProfileService>();
 
 var app = builder.Build();
 

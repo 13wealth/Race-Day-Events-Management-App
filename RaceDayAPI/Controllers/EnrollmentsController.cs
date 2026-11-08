@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using RaceDay.API.Data;
+using Microsoft.AspNetCore.Mvc;
 using RaceDay.API.DTO;
-using RaceDay.API.Models;
 using RaceDay.API.Security;
+using RaceDay.API.Services;
 
 namespace RaceDay.API.Controllers
 {
@@ -10,72 +9,13 @@ namespace RaceDay.API.Controllers
     [Route("api")]
     public class EnrollmentsController : ControllerBase
     {
-        private readonly RaceDayContext _db;
+        private readonly EnrollmentService _enrollmentService;
 
-        public EnrollmentsController(RaceDayContext db)
+        public EnrollmentsController(EnrollmentService enrollmentService)
         {
-            _db = db;
+            _enrollmentService = enrollmentService;
         }
 
-        /*
-         * Helper methods that find the logged-in participant or organiser based on the session's UserId.
-         */
-        private Participant GetLoggedInParticipant()
-        {
-            int? userIdNullable = HttpContext.Session.GetInt32("UserId");
-            if (userIdNullable == null)
-            {
-                return null;
-            }
-            int userId = userIdNullable.Value;
-
-            Participant participant = (from p in _db.Participants
-                                       join pr in _db.Profiles on p.ProfileId equals pr.ProfileId
-                                       where pr.UserId == userId
-                                       select p).FirstOrDefault();
-
-            return participant;
-        }
-
-        /*
-         * Helper method that finds the logged-in organiser based on the session's UserId.
-         */
-        private Organiser GetLoggedInOrganiser()
-        {
-            int? userIdNullable = HttpContext.Session.GetInt32("UserId");
-            if (userIdNullable == null)
-            {
-                return null;
-            }
-            int userId = userIdNullable.Value;
-
-            Organiser organiser = (from o in _db.Organisers
-                                   join p in _db.Profiles on o.ProfileId equals p.ProfileId
-                                   where p.UserId == userId
-                                   select o).FirstOrDefault();
-
-            return organiser;
-        }
-
-        /*
-         * Builds the JSON shape returned for one enrolment
-         */
-        private object EnrollmentToResponse(Enrollment en)
-        {
-            return new
-            {
-                enrolment_id = en.EnrollmentId,
-                participant_id = en.ParticipantId,
-                event_id = en.EventId,
-                category_id = en.CategoryId,
-                entry_date = en.EntryDate,
-                status = en.Status
-            };
-        }
-
-        /// <summary>
-        /// Enters the logged-in participant in an event by choosing a category. Participant only.
-        /// </summary>
         [HttpPost("enrolments")]
         [RequireRole("participant")]
         [ProducesResponseType(201)]
@@ -84,77 +24,45 @@ namespace RaceDay.API.Controllers
         [ProducesResponseType(409)]
         public IActionResult EnrolInEvent([FromBody] EnrollmentRequest request)
         {
-            Participant participant = GetLoggedInParticipant();
-            if (participant == null)
+            EnrollmentService.EnrollmentCreateResponse response = _enrollmentService.EnrolInEvent(request);
+
+            if (response.StatusCode == 404)
             {
-                return NotFound(new { error = "Participant profile not found." });
+                return NotFound(new { error = response.Error });
             }
 
-            // The category tells us which event the participant is entering
-            Category category = (from c in _db.Categories
-                                 where c.CategoryId == request.CategoryId
-                                 select c).FirstOrDefault();
-
-            if (category == null)
+            if (response.StatusCode == 409)
             {
-                return NotFound(new { error = "Category not found." });
+                return Conflict(new { error = response.Error });
             }
 
-            // A participant can enter the same event only once
-            Enrollment existing = (from en in _db.Enrollments
-                                   where en.ParticipantId == participant.ParticipantId
-                                       && en.EventId == category.EventId
-                                   select en).FirstOrDefault();
-
-            if (existing != null)
+            return StatusCode(201, new
             {
-                return Conflict(new { error = "You are already enrolled in this event." });
-            }
-
-            Enrollment enrollment = new Enrollment();
-            enrollment.ParticipantId = participant.ParticipantId;
-            enrollment.EventId = category.EventId;
-            enrollment.CategoryId = category.CategoryId;
-            enrollment.EntryDate = DateTime.UtcNow;
-            enrollment.Status = "registered";
-
-            _db.Enrollments.Add(enrollment);
-            _db.SaveChanges();
-
-            return StatusCode(201, EnrollmentToResponse(enrollment));
+                enrolment_id = response.EnrollmentId,
+                participant_id = response.ParticipantId,
+                event_id = response.EventId,
+                category_id = response.CategoryId,
+                entry_date = response.EntryDate,
+                status = response.Status
+            });
         }
 
-        /// <summary>
-        /// Lists the logged-in participant's enrolments. Participant only.
-        /// </summary>
         [HttpGet("enrolments/mine")]
         [RequireRole("participant")]
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         public IActionResult GetMyEnrollments()
         {
-            Participant participant = GetLoggedInParticipant();
-            if (participant == null)
+            EnrollmentService.EnrollmentListResponse response = _enrollmentService.GetMyEnrollments();
+
+            if (response.StatusCode == 404)
             {
-                return NotFound(new { error = "Participant profile not found." });
+                return NotFound(new { error = response.Error });
             }
 
-            List<Enrollment> mine = (from en in _db.Enrollments
-                                     where en.ParticipantId == participant.ParticipantId
-                                     select en).ToList();
-
-            List<object> result = new List<object>();
-            foreach (Enrollment en in mine)
-            {
-                result.Add(EnrollmentToResponse(en));
-            }
-
-            return Ok(result);
+            return Ok(response.Enrollments);
         }
 
-        /// <summary>
-        /// Lists all enrolments for an event. Only the organiser who owns the event.
-        /// </summary>
         [HttpGet("events/{eventId}/enrolments")]
         [RequireRole("organiser")]
         [ProducesResponseType(200)]
@@ -163,37 +71,19 @@ namespace RaceDay.API.Controllers
         [ProducesResponseType(404)]
         public IActionResult GetEventEnrollments(int eventId)
         {
-            Organiser organiser = GetLoggedInOrganiser();
-            if (organiser == null)
+            EnrollmentService.EnrollmentEventListResponse response = _enrollmentService.GetEventEnrollments(eventId);
+
+            if (response.StatusCode == 403)
             {
-                return NotFound(new { error = "Organiser profile not found." });
+                return StatusCode(403, new { error = response.Error });
             }
 
-            RaceEvent found = (from e in _db.Events
-                               where e.EventId == eventId
-                               select e).FirstOrDefault();
-
-            if (found == null)
+            if (response.StatusCode == 404)
             {
-                return NotFound(new { error = "Event not found." });
+                return NotFound(new { error = response.Error });
             }
 
-            if (found.OrganiserId != organiser.OrganiserId)
-            {
-                return StatusCode(403, new { error = "You can only view enrolments for your own events." });
-            }
-
-            List<Enrollment> enrollments = (from en in _db.Enrollments
-                                            where en.EventId == eventId
-                                            select en).ToList();
-
-            List<object> result = new List<object>();
-            foreach (Enrollment en in enrollments)
-            {
-                result.Add(EnrollmentToResponse(en));
-            }
-
-            return Ok(result);
+            return Ok(response.Enrollments);
         }
     }
 }

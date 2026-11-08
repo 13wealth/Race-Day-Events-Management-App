@@ -16,6 +16,10 @@ namespace RaceDay.API.Data
         {
         }
 
+        /*
+         * DbSet properties represent the tables in the database.
+         * Each DbSet corresponds to a specific entity type.
+         */
         public DbSet<RaceDayUser> Users { get; set; }
         public DbSet<Profile> Profiles { get; set; }
         public DbSet<Organiser> Organisers { get; set; }
@@ -26,6 +30,10 @@ namespace RaceDay.API.Data
         public DbSet<Enrollment> Enrollments { get; set; }
         public DbSet<RaceResult> Results { get; set; }
 
+        /*
+         * The OnModelCreating method is used to configure the entity relationships and constraints.
+         * It is called when the model for the context is being created.
+         */
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
