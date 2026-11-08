@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;                                                         // Enables the use of ASP.NET Core MVC features such as controllers and routing
-using RaceDay.API.DTO;
+using RaceDay.Contracts;
 using RaceDay.API.Security;
 using RaceDay.API.Services;
 

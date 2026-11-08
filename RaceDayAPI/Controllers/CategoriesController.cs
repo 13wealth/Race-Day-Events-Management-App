@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using RaceDay.API.DTO;
+using RaceDay.Contracts;
 using RaceDay.API.Security;
 using RaceDay.API.Services;
 

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using RaceDay.API.Data;
-using RaceDay.API.DTO;
+using RaceDay.Contracts;
 using RaceDay.API.Models;
 
 namespace RaceDay.API.Services

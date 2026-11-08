@@ -1,5 +1,5 @@
 using RaceDay.API.Data;
-using RaceDay.API.Dtos;
+using RaceDay.Contracts;
 using RaceDay.API.Models;
 
 namespace RaceDay.API.Services

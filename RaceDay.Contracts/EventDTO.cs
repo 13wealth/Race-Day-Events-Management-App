@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace RaceDay.API.DTO
+namespace RaceDay.Contracts
 {
     /*
      * Data Transfer Object for creating and updating race events.

@@ -1,5 +1,5 @@
 using Xunit;
-using RaceDay.API.DTO;
+using RaceDay.Contracts;
 using RaceDay.API.Models;
 
 namespace RaceDayAPI.Test

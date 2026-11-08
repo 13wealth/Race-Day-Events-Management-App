@@ -22,6 +22,7 @@
 
   <ItemGroup>
 	<ProjectReference Include="..\RaceDayAPI\RaceDay.API.csproj" />
+	<ProjectReference Include="..\RaceDay.Contracts\RaceDay.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

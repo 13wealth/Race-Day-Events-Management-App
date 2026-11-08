@@ -28,4 +28,8 @@
 	  <None Include=".github\workflows\ci.yml" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\RaceDay.Contracts\RaceDay.Contracts.csproj" />
+	</ItemGroup>
+
 </Project>

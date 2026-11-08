@@ -1,4 +1,4 @@
-using RaceDay.API.DTO;
+using RaceDay.Contracts;
 
 namespace RaceDay.API.Services
 {
