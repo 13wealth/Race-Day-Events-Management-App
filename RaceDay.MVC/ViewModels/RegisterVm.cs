@@ -11,6 +11,8 @@ namespace RaceDay.Mvc.ViewModels;
 public class RegisterVm
 {
     [Required]
+    public string Username { get; set; } = string.Empty;
+    [Required]
     public string FirstName { get; set; } = string.Empty;
 
     [Required]
@@ -24,4 +26,7 @@ public class RegisterVm
 
     [Required]
     public string Role { get; set; } = "Participant";
+
+    [Required, Phone]
+    public string Phone { get; set; } = string.Empty;
 }

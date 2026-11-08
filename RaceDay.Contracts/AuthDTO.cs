@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace RaceDay.Contracts
 {
@@ -39,5 +40,23 @@ namespace RaceDay.Contracts
 
         [Required]
         public string Password { get; set; } = "";
+    }
+
+    public class AuthResponse
+    {
+        [JsonPropertyName("user_id")]
+        public int UserId { get; set; }
+
+        [JsonPropertyName("username")]
+        public string Username { get; set; } = "";
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; } = "";
+
+        [JsonPropertyName("role")]
+        public string Role { get; set; } = "";
+
+        [JsonPropertyName("first_name")]
+        public string FirstName { get; set; } = "";
     }
 }
