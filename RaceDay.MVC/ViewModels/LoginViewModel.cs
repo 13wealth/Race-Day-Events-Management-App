@@ -5,7 +5,7 @@ namespace RaceDay.MVC.ViewModels;
 
 public class LoginViewModel
 {
-    [Required, EmailAddress]
+    [Required]
     public string Username { get; set; } = string.Empty;
 
     [Required, DataType(DataType.Password)]

@@ -68,7 +68,7 @@ public class AuthController : Controller
          */
         var response = await _api.SendAsync(
                                             HttpMethod.Post,
-                                            "api/auth/register",
+                                            "api/user/register",
                                             request
             );
 
@@ -115,7 +115,7 @@ public class AuthController : Controller
 
         var response = await _api.SendAsync(
                                             HttpMethod.Post,
-                                            "api/auth/login",
+                                            "api/user/login",
                                             request
             );
 
@@ -172,7 +172,7 @@ public class AuthController : Controller
     {
         await _api.SendAsync(
                                 HttpMethod.Post,
-                                "api/auth/logout"
+                                "api/user/logout"
             );
 
         HttpContext.Session.Clear();

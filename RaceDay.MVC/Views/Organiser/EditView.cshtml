@@ -1,0 +1,97 @@
+﻿@model RaceDay.Mvc.ViewModels.EventManagementViewModel
+
+@{
+    ViewData["Title"] = "Edit Event";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/event-management.css" asp-append-version="true" />
+}
+
+<div class="event-form-page">
+    <div class="event-form-header">
+        <h2>Edit Event</h2>
+        <p>Update the details of your race event.</p>
+    </div>
+
+    <form asp-action="EditEvent"
+          asp-route-eventId="@Context.Request.Query["eventId"]"
+          method="post"
+          class="event-form">
+
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+        <div class="form-group">
+            <label asp-for="EventName"></label>
+            <input asp-for="EventName" />
+            <span asp-validation-for="EventName" class="field-error"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Description"></label>
+            <textarea asp-for="Description" rows="4"></textarea>
+            <span asp-validation-for="Description" class="field-error"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Location"></label>
+            <input asp-for="Location" />
+            <span asp-validation-for="Location" class="field-error"></span>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="Latitude"></label>
+                <input asp-for="Latitude" type="number" step="any" />
+                <span asp-validation-for="Latitude" class="field-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Longitude"></label>
+                <input asp-for="Longitude" type="number" step="any" />
+                <span asp-validation-for="Longitude" class="field-error"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="EventDate"></label>
+                <input asp-for="EventDate" type="date"
+                       asp-format="{0:yyyy-MM-dd}" />
+                <span asp-validation-for="EventDate" class="field-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Distance"></label>
+                <input asp-for="Distance" type="number" step="0.01" />
+                <span asp-validation-for="Distance" class="field-error"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="EventType"></label>
+            <select asp-for="EventType">
+                <option value="Run">Run</option>
+                <option value="Walk">Walk</option>
+                <option value="Cycle">Cycle</option>
+            </select>
+            <span asp-validation-for="EventType" class="field-error"></span>
+        </div>
+
+        <input asp-for="Status" type="hidden" />
+
+        <div class="event-form-actions">
+            <button type="submit" class="event-button">
+                Save Changes
+            </button>
+
+            <a asp-action="Events" class="event-cancel-button">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
