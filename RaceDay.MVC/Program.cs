@@ -26,9 +26,8 @@ builder.Services.AddSession(options =>
 builder.Services.AddHttpContextAccessor();	                                            // Adds a service to provide access to the current HTTP context
 
 /*
- * This configuration registers an HTTP client called "RaceDayAPI"
- * MVC application will use this client to communicate with the Part 2 API.
- * Uses an object "client" to set the base address for the API requests.
+ * Registers and configures a named HTTP client called "RaceDayAPI".
+ * This client is configured with the base URL of the Part 2 backend API.
  */
 builder.Services.AddHttpClient("RaceDayAPI", client =>
 {
@@ -37,9 +36,14 @@ builder.Services.AddHttpClient("RaceDayAPI", client =>
                                                                                          * In this case, it checks builder.Configuration["ApiSettings:BaseUrl"]
                                                                                          */
     client.BaseAddress = new Uri(baseUrl);                                              // Set the base address for the HTTP client to the specified base URL
-});          
+});
 
-builder.Services.AddScoped<RaceDayApiClient>();                                         // Adds a scoped service for RaceDayApiClient
+/*
+ * Registers RaceDayApiClient as a scoped service.
+ * This class uses IHttpClientFactory to obtain the configured
+ * "RaceDayAPI" HTTP client and communicate with the backend.
+ */
+builder.Services.AddScoped<RaceDayApiClient>();                                        
 
 
 
