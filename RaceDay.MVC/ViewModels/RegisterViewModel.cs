@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RaceDay.MVC.ViewModels;
 
-public class RegisterVm
+public class RegisterViewModel
 {
     [Required]
     public string Username { get; set; } = string.Empty;

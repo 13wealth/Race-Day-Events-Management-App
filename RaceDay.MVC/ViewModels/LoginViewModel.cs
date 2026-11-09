@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;                                    
 
 namespace RaceDay.MVC.ViewModels;
 
-public class LoginVm
+public class LoginViewModel
 {
     [Required, EmailAddress]
     public string Username { get; set; } = string.Empty;

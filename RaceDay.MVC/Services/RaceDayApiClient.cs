@@ -134,7 +134,6 @@ public class RaceDayApiClient
             return null;
         }
 
-
         /*
          * Searches for the session cookie in the "Set-Cookie" header values.
          * FirstOrDefault() returns the first matching value.

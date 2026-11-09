@@ -38,7 +38,7 @@ public class AuthController : Controller
     /// </summary>
     /// <param name="vm">The registration view model</param>
     [HttpPost]
-    public async Task<IActionResult> Register(RegisterVm vm)
+    public async Task<IActionResult> Register(RegisterViewModel vm)
     {
         if (!ModelState.IsValid)  
         {
@@ -100,7 +100,7 @@ public class AuthController : Controller
     /// <param name="vm"></param>
     /// <returns></returns>
     [HttpPost]
-    public async Task<IActionResult> Login(LoginVm vm)
+    public async Task<IActionResult> Login(LoginViewModel vm)
     {
         if (!ModelState.IsValid)
         {

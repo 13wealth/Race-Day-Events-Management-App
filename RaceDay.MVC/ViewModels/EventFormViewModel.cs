@@ -1,6 +1,6 @@
 ﻿namespace RaceDay.MVC.ViewModels
 {
-    public class EventFormVm
+    public class EventFormViewModel
     {
     }
 }
