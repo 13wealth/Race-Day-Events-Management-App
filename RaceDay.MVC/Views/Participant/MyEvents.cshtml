@@ -1,0 +1,67 @@
+﻿@model RaceDay.Mvc.ViewModels.ParticipantMyEventsViewModel
+
+@{
+    ViewData["Title"] = "My Events";
+}
+
+<div class="container mt-4">
+
+    <h2>My Events</h2>
+    <p class="text-muted">View the races you have enrolled in.</p>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    @if (Model.Enrollments.Count == 0)
+    {
+        <div class="alert alert-info">
+            You have not enrolled in any events yet.
+        </div>
+
+        <a asp-action="UpcomingEvents" class="btn btn-primary">
+            Browse Upcoming Events
+        </a>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th>Event</th>
+                        <th>Location</th>
+                        <th>Event Date</th>
+                        <th>Category</th>
+                        <th>Entry Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model.Enrollments)
+                    {
+                        <tr>
+                            <td>@item.EventName</td>
+                            <td>@item.Location</td>
+                            <td>@item.EventDate.ToString("dd MMM yyyy HH:mm")</td>
+                            <td>@item.CategoryName</td>
+                            <td>@item.EntryDate.ToString("dd MMM yyyy")</td>
+                            <td>
+                                <span class="badge bg-success">
+                                    @item.Status
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    }
+
+</div>
