@@ -1,5 +1,135 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@model RaceDay.Mvc.ViewModels.OrganiserDashboardViewModel
+
+@section Styles {
+    <link rel="stylesheet" 
+          href="~/css/organiser-dashboard.css" 
+          asp-append-version="true" />
 }
+
+@{
+    ViewData["Title"] = "Organiser Dashboard";
+}
+
+<div class="container-fluid py-4">
+
+    <div class="dashboard-header">
+        <h2>Organiser Dashboard</h2>
+        <p>Overview of your race events and participant enrolments.</p>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="alert alert-warning" role="alert">
+            @Model.ErrorMessage
+        </div>
+    }
+
+    <!-- Dashboard statistics -->
+    <div class="row g-3">
+
+        <div class="col-12 col-md-4">
+            <div class="stat-card">
+                <div class="stat-label">Total Events</div>
+                <p class="stat-value">@Model.TotalEvents</p>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="stat-card">
+                <div class="stat-label">Total Enrolments</div>
+                <p class="stat-value">
+                    @if (Model.EnrolmentDataAvailable)
+                    {
+                        @Model.TotalEnrolments
+                    }
+                    else
+                    {
+                        <span>Partial</span>
+                    }
+                </p>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="stat-card">
+                <div class="stat-label">Upcoming Events</div>
+                <p class="stat-value">@Model.UpcomingEvents</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Event overview -->
+    <div class="dashboard-section">
+
+        <h4>Your Events</h4>
+
+        @if (Model.Events.Any())
+        {
+            <div class="table-responsive">
+                <table class="table event-table align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Location</th>
+                            <th>Date</th>
+                            <th>Distance</th>
+                            <th>Status</th>
+                            <th>Enrolments</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var eventItem in Model.Events.OrderBy(e => e.EventDate))
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@eventItem.EventName</strong>
+                                    <div class="text-muted small">
+                                        @eventItem.EventType
+                                    </div>
+                                </td>
+
+                                <td>@eventItem.Location</td>
+
+                                <td>
+                                    @eventItem.EventDate.ToString("dd MMM yyyy")
+                                </td>
+
+                                <td>@eventItem.Distance.ToString("0.##") km</td>
+
+                                <td>
+                                    <span class="status-badge">
+                                        @eventItem.Status
+                                    </span>
+                                </td>
+
+                                <td>
+                                    @if (eventItem.EnrolmentCount.HasValue)
+                                    {
+                                        <strong>@eventItem.EnrolmentCount</strong>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Unavailable</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <h5>No events yet</h5>
+                <p>You haven't created any race events.</p>
+            </div>
+        }
+
+    </div>
+
+</div>

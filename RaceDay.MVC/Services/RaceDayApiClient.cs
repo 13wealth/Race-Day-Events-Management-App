@@ -180,5 +180,14 @@ public class RaceDayApiClient
  * EXTRA NOTES                                                                                                              *
  *  A factory is something that creates objects for us.                                                                     *
  *  IHttpClientFactory is a built-in .NET service that creates and manages HttpClient objects.                              *
- *  Instead of manually creating an HttpClient every time, we ask the factory to create one                                 *                
+ *  Instead of manually creating an HttpClient every time, we ask the factory to create one                                 *
+ *                                                                                                                          *
+ * SendAsync() – communicates with the API                                                                                  *
+ *  Creates the HTTP request.                                                                                               *
+ *  Forwards the API session cookie.                                                                                        *
+ *  Sends the request to the API.                                                                                           *
+ *  Returns the HTTP response.      |    ReadAsync() – reads the response                                                   *
+ *                                       Checks whether the response was successful.                                        *
+ *                                       Reads the JSON returned by the API.                                                *
+ *                                       Converts that JSON into a C# object.                                               *                
  * **************************************************************************************************************************/

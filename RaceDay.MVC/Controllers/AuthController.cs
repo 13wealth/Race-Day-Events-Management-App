@@ -126,7 +126,7 @@ public class AuthController : Controller
             return View(vm);
         }
 
-        var auth = await _api.ReadAsync<AuthResponse>(response);
+        var auth = await _api.ReadAsync<AuthResponse>(response);                        // Read the authentication response from the API
 
         if (auth == null)
         {
