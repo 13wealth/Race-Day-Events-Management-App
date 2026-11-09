@@ -165,5 +165,109 @@ namespace RaceDay.MVC.Controllers
 
             return View(model);
         }
+
+        /*
+ * Retrieves the details and available categories for a selected event.
+ * 1. Checks that the logged-in user is a participant.
+ * 2. Retrieves event details from the RaceDay API.
+ * 3. Retrieves categories belonging to the selected event.
+ * 4. Displays the event details and available categories.
+ */
+        [HttpGet]
+        public async Task<IActionResult> EventDetails(int eventId)
+        {
+            if (!IsLoggedIn())
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            if (!IsParticipant())
+            {
+                return Forbid();
+            }
+
+            HttpResponseMessage eventResponse = await _api.SendAsync(
+                HttpMethod.Get, $"api/events/{eventId}");
+
+            if (!eventResponse.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "Unable to retrieve event details.";
+                return RedirectToAction(nameof(UpcomingEvents));
+            }
+
+            EventApiResponse eventDetails =
+                await _api.ReadAsync<EventApiResponse>(eventResponse);
+
+            HttpResponseMessage categoryResponse = await _api.SendAsync(
+                HttpMethod.Get, $"api/events/{eventId}/categories");
+
+            if (!categoryResponse.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "Unable to retrieve event categories.";
+                return RedirectToAction(nameof(UpcomingEvents));
+            }
+
+            List<CategoryApiResponse> categories =
+                await _api.ReadAsync<List<CategoryApiResponse>>(categoryResponse);
+
+            ParticipantEventDetailsViewModel model =
+                new ParticipantEventDetailsViewModel();
+
+            model.Event = eventDetails;
+            model.Categories = categories;
+
+            return View(model);
+        }
+
+
+        /*
+         * Enrols the logged-in participant in a selected event category.
+         * 1. Checks that the logged-in user is a participant.
+         * 2. Sends the event and category IDs to the RaceDay API.
+         * 3. Handles successful enrolment and API errors.
+         * 4. Returns the participant to the event details page.
+         */
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EnrolInEvent(
+            int eventId, int categoryId)
+        {
+            if (!IsLoggedIn())
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            if (!IsParticipant())
+            {
+                return Forbid();
+            }
+
+            var request = new
+            {
+                EventId = eventId,
+                CategoryId = categoryId
+            };
+
+            HttpResponseMessage response = await _api.SendAsync(
+                HttpMethod.Post, "api/enrolments", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["SuccessMessage"] = "You have successfully enrolled in this event.";
+                return RedirectToAction(nameof(UpcomingEvents));
+            }
+
+            if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                TempData["ErrorMessage"] = "You are already enrolled in this category.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Unable to complete your enrolment.";
+            }
+
+            return RedirectToAction(nameof(EventDetails),
+                new { eventId = eventId });
+        }
     }
 }

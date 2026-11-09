@@ -1,0 +1,74 @@
+﻿@model RaceDay.Mvc.ViewModels.ParticipantEventDetailsViewModel
+
+@{
+    ViewData["Title"] = "Event Details";
+}
+
+<div class="container mt-4">
+
+    <a asp-action="UpcomingEvents" class="btn btn-outline-secondary mb-3">
+        Back to Events
+    </a>
+
+    <h2>@Model.Event.EventName</h2>
+
+    <p>@Model.Event.Description</p>
+
+    <hr />
+
+    <h5>Event Information</h5>
+
+    <p><strong>Location:</strong> @Model.Event.Location</p>
+    <p><strong>Date:</strong> @Model.Event.EventDate.ToString("dd MMMM yyyy HH:mm")</p>
+    <p><strong>Distance:</strong> @Model.Event.Distance km</p>
+    <p><strong>Event Type:</strong> @Model.Event.EventType</p>
+    <p><strong>Status:</strong> @Model.Event.Status</p>
+
+    <hr />
+
+    <h5>Available Categories</h5>
+
+    @if (Model.Categories.Any())
+    {
+        <form asp-action="EnrolInEvent" method="post">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden"
+                   name="eventId"
+                   value="@Model.Event.EventId" />
+
+            <div class="mb-3">
+                <label for="categoryId" class="form-label">
+                    Select a Category
+                </label>
+
+                <select name="categoryId"
+                        id="categoryId"
+                        class="form-select"
+                        required>
+
+                    <option value="">-- Select Category --</option>
+
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.CategoryId">
+                            @category.CategoryName
+                        </option>
+                    }
+
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Enrol in Event
+            </button>
+
+        </form>
+    }
+    else
+    {
+        <p>No categories are currently available for this event.</p>
+    }
+
+</div>
