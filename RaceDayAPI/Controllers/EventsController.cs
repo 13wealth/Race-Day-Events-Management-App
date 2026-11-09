@@ -86,6 +86,33 @@ namespace RaceDay.API.Controllers
         }
 
         /// <summary>
+        /// Retrieves all race events belonging to the currently logged-in organiser.
+        /// Only event organizers can perform this action.
+        /// </summary>
+        /// <returns>
+        /// A 200 OK response with the list of events owned by the organiser,
+        /// a 403 Forbidden if user is not an organizer,
+        /// or a 404 Not Found if organiser profile doesn't exist.
+        /// </returns>
+        [HttpGet("mine")]
+        [RequireRole("organiser")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public IActionResult GetMyEvents()
+        {
+            EventService.EventListResponse response = _eventService.GetUserEvents();
+
+            if (response.StatusCode == 404)
+            {
+                return NotFound(new { error = "Organiser profile not found." });
+            }
+
+            return Ok(response.Events);
+        }
+
+        /// <summary>
         /// Retrieves a specific event by ID.
         /// </summary>
         /// <param name="eventId">The ID of the event.</param>

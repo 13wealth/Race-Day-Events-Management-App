@@ -140,6 +140,65 @@ namespace RaceDay.API.Services
         }
 
         /*
+         * Retrieves all events belonging to the logged-in organiser.
+         * Filters events by matching OrganiserId to the current organiser.
+         * Returns a list of event objects belonging only to this organiser.
+         * Returns an EventListResponse with 200 status code on success.
+         * Returns error response with 404 status code if organiser profile not found.
+         */
+        public EventListResponse GetUserEvents()
+        {
+            // Get the logged-in organiser from the session and authentication helper
+            Organiser organiser = _authHelper.GetLoggedInOrganiser();
+            if (organiser == null)                                                      // Check if user is not an organiser
+            {
+                EventListResponse organiserErrorResponse = new EventListResponse();
+                organiserErrorResponse.Events = new List<object>();
+                organiserErrorResponse.StatusCode = 404;
+                return organiserErrorResponse;
+            }
+
+            // Retrieve only events belonging to the logged-in organiser
+            List<EventModel> userEvents = new List<EventModel>();
+            foreach (EventModel e in _db.Events)
+            {
+                if (e.OrganiserId == organiser.OrganiserId)                            // Check if event belongs to this organiser
+                {
+                    userEvents.Add(e);
+                }
+            }
+
+            // Create response object and initialize the events list
+            EventListResponse response = new EventListResponse();
+            response.Events = new List<object>();
+
+            /*
+             * Iterate through the user's events and convert each to an anonymous object format.
+             * This format is used for the API response to format field names appropriately.
+             */
+            foreach (EventModel e in userEvents)
+            {
+                object eventObj = new
+                {
+                    event_id = e.EventId,
+                    event_name = e.EventName,
+                    description = e.Description,
+                    location = e.Location,
+                    latitude = e.Latitude,
+                    longitude = e.Longitude,
+                    event_date = e.EventDate,
+                    distance = e.Distance,
+                    event_type = e.EventType,
+                    status = e.Status
+                };
+                response.Events.Add(eventObj);
+            }
+
+            response.StatusCode = 200;
+            return response;
+        }
+
+        /*
          * Retrieves a specific event by its event ID.
          * Searches the database for the event matching the provided ID.
          * Returns an EventDetailResponse with event details and 200 status code on success.
