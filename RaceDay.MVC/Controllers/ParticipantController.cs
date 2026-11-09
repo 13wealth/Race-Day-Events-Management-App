@@ -65,6 +65,7 @@ namespace RaceDay.MVC.Controllers
 
         /*
          * Displays the participant dashboard.
+         * Redirects to UpcomingEvents to show upcoming events by default.
          */
         public IActionResult Index()
         {
@@ -73,7 +74,7 @@ namespace RaceDay.MVC.Controllers
             if (accessResult != null)
                 return accessResult;
 
-            return View();
+            return RedirectToAction(nameof(UpcomingEvents));
         }
 
         /*
