@@ -59,66 +59,141 @@
                         <th>Distance</th>
                         <th>Type</th>
                         <th>Status</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
 
                 <tbody>
+                    @{
+                        int rowIndex = 0;
+                    }
                     @foreach (var eventItem in Model)
                     {
-                        <tr>
+                        var rowClass = rowIndex % 2 == 0 ? "event-row-even" : "event-row-odd";
+                        var isClickable = rowIndex % 2 == 0 ? "event-row-clickable" : "";
+
+                        <tr class="@rowClass @isClickable" data-event-id="@eventItem.EventId" onclick="@(rowIndex % 2 == 0 ? $"openEventDetails({eventItem.EventId}, '{eventItem.EventName}', '{eventItem.Location}', '{eventItem.EventDate:dd MMM yyyy}', '{eventItem.Distance}', '{eventItem.EventType}', '{eventItem.Status}')" : "")">
                             <td>@eventItem.EventName</td>
                             <td>@eventItem.Location</td>
                             <td>@eventItem.EventDate.ToString("dd MMM yyyy")</td>
                             <td>@eventItem.Distance km</td>
                             <td>@(char.ToUpper(eventItem.EventType[0]) + eventItem.EventType.Substring(1))</td>
                             <td>@(char.ToUpper(eventItem.Status[0]) + eventItem.Status.Substring(1))</td>
-
-                            <td class="event-actions">
-                                <a asp-action="ManageCategories"
-                                   asp-route-eventId="@eventItem.EventId"
-                                   class="btn btn-info btn-action">
-                                    <i class="fas fa-list"></i> 
-                                    Categories
-                                </a>
-
-                                <a asp-action="EventEnrollments"
-                                   asp-route-eventId="@eventItem.EventId"
-                                   class="btn btn-check btn-action">
-                                    <i class="fas fa-book"></i>
-                                    Enrolments
-                                </a>
-
-                                <form asp-action="DeleteEvent"
-                                      method="post"
-                                      onsubmit="return confirm('Are you sure you want to delete this event?');"
-                                      style="display: inline;">
-
-                                    <input type="hidden"
-                                           name="eventId"
-                                           value="@eventItem.EventId" />
-
-                                    <a asp-action="EditEvent"
-                                       asp-route-eventId="@eventItem.EventId"
-                                       class="btn btn-primary btn-action">
-                                        <i class="fas fa-edit"></i>
-                                        Edit
-                                    </a>
-
-                                    <button type="submit" class="btn btn-danger btn-action">
-                                        <i class="fas fa-trash"></i> 
-                                        Delete
-                                    </button>
-
-                                </form>
-
-                            </td>
                         </tr>
+                        rowIndex++;
                     }
                 </tbody>
             </table>
 
         </div>
+
+        <!-- Event Details Modal -->
+        <div id="eventDetailsModal" class="event-modal">
+            <div class="event-modal-content">
+                <span class="event-modal-close" onclick="closeEventDetails()">&times;</span>
+
+                <!-- Event Details (Top Section) -->
+                <div id="eventDetailsContent" class="event-details-section">
+                    <!-- Details will be loaded here -->
+                </div>
+
+                <!-- Action Buttons (Bottom Section) -->
+                <div class="event-actions-section">
+                    <div id="eventActionsContainer" class="event-modal-actions">
+                        <!-- Actions will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
     }
 
 </div>
+
+<script>
+    function openEventDetails(eventId, eventName, location, eventDate, distance, eventType, eventStatus) {
+        // Build event details HTML
+        const detailsHtml = `
+            <div class="event-details-card">
+                <h2>${eventName}</h2>
+                <div class="event-details-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Location:</span>
+                        <span class="detail-value">${location}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Date:</span>
+                        <span class="detail-value">${eventDate}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Distance:</span>
+                        <span class="detail-value">${distance} km</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Type:</span>
+                        <span class="detail-value">${eventType}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Status:</span>
+                        <span class="detail-value status-${eventStatus.toLowerCase()}">${eventStatus}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('eventDetailsContent').innerHTML = detailsHtml;
+
+        // Build action buttons HTML
+        const actionsHtml = `
+            <a href="/Organiser/ManageCategories?eventId=${eventId}" class="btn btn-info btn-action">
+                <i class="fas fa-list"></i> Categories
+            </a>
+            <a href="/Organiser/EventEnrollments?eventId=${eventId}" class="btn btn-secondary btn-action">
+                <i class="fas fa-users"></i> Enrolments
+            </a>
+            <a href="/Organiser/ResultsEntry?eventId=${eventId}" class="btn btn-success btn-action">
+                <i class="fas fa-chart-bar"></i> Enter Results
+            </a>
+            <a href="/Organiser/EditEvent?eventId=${eventId}" class="btn btn-primary btn-action">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <button type="button" class="btn btn-danger btn-action" onclick="deleteEvent(${eventId})">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        `;
+
+        document.getElementById('eventActionsContainer').innerHTML = actionsHtml;
+
+        // Show modal
+        document.getElementById('eventDetailsModal').style.display = 'block';
+    }
+
+    function closeEventDetails() {
+        document.getElementById('eventDetailsModal').style.display = 'none';
+    }
+
+    function deleteEvent(eventId) {
+        if (confirm('Are you sure you want to delete this event?')) {
+            // Submit form to delete
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/Organiser/DeleteEvent';
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'eventId';
+            input.value = eventId;
+
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+        const modal = document.getElementById('eventDetailsModal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+</script>
+

@@ -820,6 +820,11 @@ body {
     color: white;
 }
 
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
 .btn-success {
     background: var(--success-color);
     color: white;

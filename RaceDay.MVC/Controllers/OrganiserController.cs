@@ -799,5 +799,124 @@ namespace RaceDay.MVC.Controllers
 
             return View(model);
         }
+
+
+        /*
+         * Displays the participants who are enrolled in an organiser's event.
+         * 1. Verifies organiser access.
+         * 2. Confirms the event belongs to the organiser.
+         * 3. Retrieves the event enrolments from the API.
+         * 4. Displays the participants for results entry.
+         */
+        public async Task<IActionResult> ResultsEntry(int eventId)
+        {
+            IActionResult accessResult = CheckOrganiserAccess();
+            if (accessResult != null) return accessResult;
+
+            (HttpStatusCode StatusCode, List<EventApiResponse>? Events) result =
+                await GetOrganiserEventsAsync();
+
+            if (result.StatusCode == HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (result.Events == null)
+                return RedirectToAction("Events");
+
+            EventApiResponse selectedEvent = null;
+
+            foreach (EventApiResponse eventItem in result.Events)
+            {
+                if (eventItem.EventId == eventId)
+                {
+                    selectedEvent = eventItem;
+                    break;
+                }
+            }
+
+            if (selectedEvent == null)
+                return RedirectToAction("Events");
+
+            HttpResponseMessage response = await _api.SendAsync(
+                HttpMethod.Get, $"api/events/{eventId}/enrolments");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "Unable to retrieve event enrolments.";
+                return RedirectToAction("Events");
+            }
+
+            List<EnrollmentApiResponse>? enrollments =
+                await _api.ReadAsync<List<EnrollmentApiResponse>>(response);
+
+            EventEnrollmentViewModel model = new EventEnrollmentViewModel();
+            model.EventId = selectedEvent.EventId;
+            model.EventName = selectedEvent.EventName;
+
+            if (enrollments != null)
+                model.Enrollments = enrollments;
+
+            return View(model);
+        }
+
+
+        /*
+         * Records a participant's race result.
+         * 1. Verifies organiser access.
+         * 2. Validates the submitted times and finishing position.
+         * 3. Sends the result to the RaceDay API.
+         * 4. Displays the API response to the organiser.
+         */
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RecordResult(
+            int eventId,
+            int enrolmentId,
+            DateTime startTime,
+            DateTime finishTime,
+            int position)
+        {
+            IActionResult accessResult = CheckOrganiserAccess();
+            if (accessResult != null) return accessResult;
+
+            if (startTime == default || finishTime == default ||
+                finishTime <= startTime || position <= 0)
+            {
+                TempData["ErrorMessage"] =
+                    "Enter valid start and finish times and a position greater than zero.";
+
+                return RedirectToAction("ResultsEntry", new { eventId });
+            }
+
+            ResultRequest request = new ResultRequest();
+            request.StartTime = startTime;
+            request.FinishTime = finishTime;
+            request.Position = position;
+
+            HttpResponseMessage response = await _api.SendAsync(
+                HttpMethod.Post,
+                $"api/enrolments/{enrolmentId}/result",
+                request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["SuccessMessage"] = "Result recorded successfully.";
+            }
+            else if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                TempData["ErrorMessage"] =
+                    "A result has already been recorded for this enrolment.";
+            }
+            else if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                TempData["ErrorMessage"] =
+                    "You are not authorised to record results for this event.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Unable to record the result.";
+            }
+
+            return RedirectToAction("ResultsEntry", new { eventId });
+        }
     }
 }
