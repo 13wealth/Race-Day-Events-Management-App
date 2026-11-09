@@ -124,6 +124,12 @@ namespace RaceDay.Mvc.ViewModels
 
         [JsonPropertyName("status")]
         public string Status { get; set; } = "";
+        
+        [JsonPropertyName("latitude")]
+        public decimal Latitude { get; set; }
+
+        [JsonPropertyName("longitude")]
+        public decimal Longitude { get; set; }
     }
 
 

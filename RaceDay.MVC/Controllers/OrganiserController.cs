@@ -1,4 +1,5 @@
-﻿/***************************************************************************************
+﻿
+/***************************************************************************************
  *                                ORGANISER CONTROLLER                                 *
  * This controller manages the organiser section of the RaceDay MVC application.       *
  * It handles operations such as:                                                      *
@@ -12,6 +13,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RaceDay.Mvc.ViewModels;
 using RaceDay.MVC.Services;
+using RaceDay.Contracts;
 
 namespace RaceDay.MVC.Controllers
 {
@@ -24,84 +26,116 @@ namespace RaceDay.MVC.Controllers
             _api = api;
         }
 
+
         /*
-         * Check if the user is logged in by verifying if the "UserId" session variable exists.
-         * Returns true if the user is logged in, false otherwise.
+         * Checks whether the user is logged in.
          */
         private bool IsLoggedIn()
         {
-            return HttpContext
-                   .Session
-                   .GetInt32("UserId")
-                   .HasValue; 
+            return HttpContext.Session.GetInt32("UserId").HasValue;
         }
 
 
         /*
-         * Check if the logged-in user has the role of "organiser" by comparing the "Role" session variable.
-         * Returns true if the user is an organiser, false otherwise.
+         * Checks whether the logged-in user has the organiser role.
          */
         private bool IsOrganiser()
         {
             return string.Equals(
-                                HttpContext.Session.GetString("Role"),
-                                "organiser",
-                                StringComparison.OrdinalIgnoreCase
-            );
+                HttpContext.Session.GetString("Role"),
+                "organiser",
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+
+        /*
+         * Centralises access control for all organiser actions.
+         * Returns a redirect result if access is denied.
+         * Returns null when the user is authorised.
+         */
+        private IActionResult? CheckOrganiserAccess()
+        {
+            if (!IsLoggedIn())
+                return RedirectToAction("Login", "Auth");
+
+            if (!IsOrganiser())
+                return RedirectToAction("AccessDenied", "Home");
+
+            return null;
+        }
+
+
+        /*
+         * Retrieves the events belonging to the currently logged-in organiser.
+         * Returns both the API status code and the deserialised event list.
+         */
+        private async Task<(System.Net.HttpStatusCode StatusCode,
+                            List<EventApiResponse>? Events)> GetOrganiserEventsAsync()
+        {
+            using var response = await _api.SendAsync(
+                HttpMethod.Get,
+                "api/events/mine");
+
+            List<EventApiResponse>? events = null;
+
+            if (response.IsSuccessStatusCode)
+            {
+                events = await _api.ReadAsync<List<EventApiResponse>>(response);
+            }
+
+            return (response.StatusCode, events);
+        }
+
+
+        /*
+         * Converts the MVC event form model into the API event request contract.
+         * Used by both CreateEvent and EditEvent.
+         */
+        private EventRequest CreateEventRequest(EventManagementViewModel model)
+        {
+            return new EventRequest
+            {
+                EventName = model.EventName,
+                Description = model.Description,
+                Location = model.Location,
+                Latitude = model.Latitude,
+                Longitude = model.Longitude,
+                EventDate = model.EventDate,
+                Distance = model.Distance,
+                EventType = model.EventType,
+                Status = model.Status
+            };
         }
 
 
         /*
          * Displays the organiser dashboard.
-         * Retrieves the organiser's events from the API.
-         * Retrieves enrolments for each event and calculates dashboard totals.
+         * Retrieves the organiser's events and calculates enrolment totals.
          */
         public async Task<IActionResult> Index()
         {
-            OrganiserDashboardViewModel dashboard = new OrganiserDashboardViewModel();  // Create a new instance of the dashboard view model.
+            IActionResult? accessResult = CheckOrganiserAccess();
 
-            if (!IsLoggedIn())                                                          // Check whether the user is logged in.
-            {
-                return RedirectToAction("Login", "Auth");                               // Redirect to the login page if not logged in.
-            }
-       
-            if (!IsOrganiser())                                                         // Check whether the logged-in user is an organiser.
-            {
-                return RedirectToAction("AccessDenied", "Home");
-            }
+            if (accessResult != null)
+                return accessResult;
 
-            /*
-             * Retrieve the organiser's events from the API.
-             * If the API call is successful, process each event to retrieve its enrolment count.
-             * If the API call fails, display an error message on the dashboard.
-             */
-            using var eventsResponse = await _api.SendAsync(
-                                                                    HttpMethod.Get,
-                                                                    "api/events/mine"
-                );
+            OrganiserDashboardViewModel dashboard =
+                new OrganiserDashboardViewModel();
 
-            if (eventsResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-            {
-                return RedirectToAction("Login", "Auth");                               // Redirect to the login page if the API returns an unauthorized status code.
-            }
+            var result = await GetOrganiserEventsAsync();
 
-            if (!eventsResponse.IsSuccessStatusCode)
+            if (result.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (!IsSuccessfulStatusCode(result.StatusCode))
             {
                 dashboard.ErrorMessage =
                     "Unable to retrieve your events. Please try again.";
 
-                return View(dashboard);                                                 // Return the dashboard view with an error message if the API call fails.
+                return View(dashboard);
             }
 
-            /*
-             * Read the list of events from the API response.
-             * If the API response is null, display an error message on the dashboard.
-             */
-            List<EventApiResponse>? events = 
-                await _api
-                      .ReadAsync<List<EventApiResponse>>(
-                            eventsResponse
-                );
+            List<EventApiResponse>? events = result.Events;
 
             if (events == null)
             {
@@ -111,13 +145,10 @@ namespace RaceDay.MVC.Controllers
                 return View(dashboard);
             }
 
-            /*
-             * Process each event to retrieve its enrolment count.
-             * If the enrolment API call fails, display an error message on the dashboard.
-             */
             foreach (EventApiResponse eventItem in events)
             {
-                OrganiserEventViewModel eventViewModel = new OrganiserEventViewModel();
+                OrganiserEventViewModel eventViewModel =
+                    new OrganiserEventViewModel();
 
                 eventViewModel.EventId = eventItem.EventId;
                 eventViewModel.EventName = eventItem.EventName;
@@ -128,32 +159,16 @@ namespace RaceDay.MVC.Controllers
                 eventViewModel.EventType = eventItem.EventType;
                 eventViewModel.Status = eventItem.Status;
 
-                /*
-                 * Retrieve the enrolments for the current event from the API.
-                 */
-                using var enrolmentsResponse = 
-                    await _api
-                          .SendAsync(
-                                     HttpMethod.Get,
-                                     $"api/events/{eventItem.EventId}/enrolments"
-                    );
+                using var enrolmentsResponse = await _api.SendAsync(
+                    HttpMethod.Get,
+                    $"api/events/{eventItem.EventId}/enrolments");
 
-                /*
-                 * If the enrolment API call is successful, read the list of enrolments 
-                 * If the enrolment API call fails, set the enrolment count to null 
-                 */
-                if (enrolmentsResponse.IsSuccessStatusCode) 
+                if (enrolmentsResponse.IsSuccessStatusCode)
                 {
                     List<EnrolmentApiResponse>? enrolments =
-                        await _api
-                              .ReadAsync<List<EnrolmentApiResponse>>(
-                                    enrolmentsResponse
-                        );
+                        await _api.ReadAsync<List<EnrolmentApiResponse>>(
+                            enrolmentsResponse);
 
-                    /*
-                     * If the enrolments list is NOT null, set the enrolment count in the event view model.
-                     * If the enrolments list is null, set the enrolment count to null 
-                     */
                     if (enrolments != null)
                     {
                         eventViewModel.EnrolmentCount = enrolments.Count;
@@ -169,20 +184,12 @@ namespace RaceDay.MVC.Controllers
                     eventViewModel.EnrolmentCount = null;
                     dashboard.EnrolmentDataAvailable = false;
 
-                    /*
-                     * If the enrolment API call fails with an Unauthorized status code,
-                     * redirect the user to Access Denied page.
-                     */
                     if (enrolmentsResponse.StatusCode ==
                         System.Net.HttpStatusCode.Unauthorized)
                     {
                         return RedirectToAction("Login", "Auth");
                     }
 
-                    /*
-                     * If the enrolment API call fails with a Forbidden status code,
-                     * redirect the user to the Access Denied page.
-                     */
                     if (enrolmentsResponse.StatusCode ==
                         System.Net.HttpStatusCode.Forbidden)
                     {
@@ -190,12 +197,9 @@ namespace RaceDay.MVC.Controllers
                     }
                 }
 
-                dashboard.Events.Add(eventViewModel);                                   // Add the event view model to the dashboard's list of events.
+                dashboard.Events.Add(eventViewModel);
             }
 
-            /*
-             * If any enrolment data could not be retrieved, set an error message on the dashboard.
-             */
             if (!dashboard.EnrolmentDataAvailable)
             {
                 dashboard.ErrorMessage =
@@ -203,6 +207,241 @@ namespace RaceDay.MVC.Controllers
             }
 
             return View(dashboard);
+        }
+
+
+        /*
+         * Checks whether an HTTP status code indicates a successful response.
+         */
+        private bool IsSuccessfulStatusCode(System.Net.HttpStatusCode statusCode)
+        {
+            return (int)statusCode >= 200 && (int)statusCode <= 299;
+        }
+
+
+        /*
+         * Displays the organiser's event listing.
+         */
+        public async Task<IActionResult> Events()
+        {
+            IActionResult? accessResult = CheckOrganiserAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            var result = await GetOrganiserEventsAsync();
+
+            if (result.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (!IsSuccessfulStatusCode(result.StatusCode))
+            {
+                TempData["ErrorMessage"] =
+                    "Unable to retrieve your events.";
+
+                return View(new List<EventApiResponse>());
+            }
+
+            if (result.Events == null)
+            {
+                TempData["ErrorMessage"] =
+                    "The API returned an unexpected event response.";
+
+                return View(new List<EventApiResponse>());
+            }
+
+            return View(result.Events);
+        }
+
+
+        /*
+         * CREATE EVENT - GET
+         * Displays the event creation form.
+         */
+        [HttpGet]
+        public IActionResult CreateEvent()
+        {
+            IActionResult? accessResult = CheckOrganiserAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            return View(new EventManagementViewModel());
+        }
+
+
+        /*
+         * CREATE EVENT - POST
+         * Validates the form and sends the new event to the API.
+         */
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateEvent(EventManagementViewModel model)
+        {
+            IActionResult? accessResult = CheckOrganiserAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            EventRequest request = CreateEventRequest(model);
+
+            using var response = await _api.SendAsync(
+                HttpMethod.Post,
+                "api/events",
+                request);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ModelState.AddModelError(
+                    "",
+                    "The event could not be created. Please check your information and try again.");
+
+                return View(model);
+            }
+
+            TempData["SuccessMessage"] = "Event created successfully.";
+
+            return RedirectToAction(nameof(Events));
+        }
+
+
+        /*
+         * EDIT EVENT - GET
+         * Retrieves an existing event and displays its information.
+         */
+        [HttpGet]
+        public async Task<IActionResult> EditEvent(int eventId)
+        {
+            IActionResult? accessResult = CheckOrganiserAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            using var response = await _api.SendAsync(
+                HttpMethod.Get,
+                $"api/events/{eventId}");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return NotFound();
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                return RedirectToAction("AccessDenied", "Home");
+
+            if (!response.IsSuccessStatusCode)
+                return RedirectToAction(nameof(Events));
+
+            EventApiResponse? eventItem =
+                await _api.ReadAsync<EventApiResponse>(response);
+
+            if (eventItem == null)
+                return NotFound();
+
+            EventManagementViewModel model = new EventManagementViewModel
+            {
+                EventName = eventItem.EventName,
+                Description = eventItem.Description,
+                Location = eventItem.Location,
+                Latitude = eventItem.Latitude,
+                Longitude = eventItem.Longitude,
+                EventDate = eventItem.EventDate,
+                Distance = eventItem.Distance,
+                EventType = eventItem.EventType,
+                Status = eventItem.Status
+            };
+
+            return View(model);
+        }
+
+
+        /*
+         * EDIT EVENT - POST
+         * Validates the changes and sends an update request to the API.
+         */
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditEvent(
+            int eventId,
+            EventManagementViewModel model)
+        {
+            IActionResult? accessResult = CheckOrganiserAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            EventRequest request = CreateEventRequest(model);
+
+            using var response = await _api.SendAsync(
+                HttpMethod.Put,
+                $"api/events/{eventId}",
+                request);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                return RedirectToAction("AccessDenied", "Home");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ModelState.AddModelError(
+                    "",
+                    "The event could not be updated. Please try again.");
+
+                return View(model);
+            }
+
+            TempData["SuccessMessage"] = "Event updated successfully.";
+
+            return RedirectToAction(nameof(Events));
+        }
+
+
+        /*
+         * DELETE EVENT - POST
+         * Sends a delete request for the selected event to the API.
+         */
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteEvent(int eventId)
+        {
+            IActionResult? accessResult = CheckOrganiserAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            using var response = await _api.SendAsync(
+                HttpMethod.Delete,
+                $"api/events/{eventId}");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                return RedirectToAction("AccessDenied", "Home");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] =
+                    "The event could not be deleted.";
+
+                return RedirectToAction(nameof(Events));
+            }
+
+            TempData["SuccessMessage"] = "Event deleted successfully.";
+
+            return RedirectToAction(nameof(Events));
         }
     }
 }
