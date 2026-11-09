@@ -9,6 +9,7 @@
 }
 
 <div class="event-page">
+
     <div class="event-page-header">
         <div>
             <h2>My Events</h2>
@@ -39,6 +40,7 @@
         <div class="event-empty">
             <h3>No events found</h3>
             <p>You have not created any events yet.</p>
+
             <a asp-action="CreateEvent" class="event-button">
                 Create Your First Event
             </a>
@@ -47,6 +49,7 @@
     else
     {
         <div class="event-table-container">
+
             <table class="event-table">
                 <thead>
                     <tr>
@@ -68,13 +71,21 @@
                             <td>@eventItem.Location</td>
                             <td>@eventItem.EventDate.ToString("dd MMM yyyy")</td>
                             <td>@eventItem.Distance km</td>
-                            <td>@eventItem.EventType</td>
-                            <td>@eventItem.Status</td>
+                            <td>@(char.ToUpper(eventItem.EventType[0]) + eventItem.EventType.Substring(1))</td>
+                            <td>@(char.ToUpper(eventItem.Status[0]) + eventItem.Status.Substring(1))</td>
+
                             <td class="event-actions">
+
                                 <a asp-action="EditEvent"
                                    asp-route-eventId="@eventItem.EventId"
                                    class="event-link">
                                     Edit
+                                </a>
+
+                                <a asp-action="ManageCategories"
+                                   asp-route-eventId="@eventItem.EventId"
+                                   class="event-link">
+                                    Manage Categories
                                 </a>
 
                                 <form asp-action="DeleteEvent"
@@ -88,12 +99,16 @@
                                     <button type="submit" class="event-delete-button">
                                         Delete
                                     </button>
+
                                 </form>
+
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
+
         </div>
     }
+
 </div>

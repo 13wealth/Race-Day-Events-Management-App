@@ -142,10 +142,10 @@ public class AuthController : Controller
             HttpContext.Session.SetString("ApiSessionCookie", apiCookie);
         }
 
-        
         HttpContext.Session.SetInt32("UserId", auth.UserId);                            // Store the logged-in user's information in the MVC session
         HttpContext.Session.SetString("Role", auth.Role);                               // Store the user's role in the MVC session
-
+        HttpContext.Session.SetString("FirstName", auth.FirstName ?? "");               // Store user's first name
+        HttpContext.Session.SetString("LastName", auth.LastName ?? "");                 // Store user's last name
         HttpContext.Session.SetString(
                                         "DisplayName",
                                         auth.FirstName ?? auth.Email

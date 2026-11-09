@@ -1,0 +1,139 @@
+﻿@model RaceDay.Mvc.ViewModels.CategoryManagementViewModel
+
+@{
+    ViewData["Title"] = "Manage Categories";
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Manage Categories</h2>
+            <p class="text-muted mb-0">
+                Event: <strong>@Model.EventName</strong>
+            </p>
+        </div>
+
+        <a asp-controller="Organiser"
+           asp-action="Events"
+           class="btn btn-outline-secondary">
+            Back to Events
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- ADD NEW CATEGORY -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Add New Category</h5>
+        </div>
+
+        <div class="card-body">
+
+            <form asp-controller="Organiser"
+                  asp-action="CreateCategory"
+                  asp-route-eventId="@Model.EventId"
+                  method="post">
+
+                <input type="hidden" asp-for="EventId" />
+
+                <div class="mb-3">
+                    <label asp-for="CategoryName" class="form-label"></label>
+
+                    <input asp-for="CategoryName"
+                           class="form-control"
+                           placeholder="Enter category name" />
+
+                    <span asp-validation-for="CategoryName"
+                          class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Add Category
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+
+
+    <!-- EXISTING EVENT CATEGORIES -->
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">Event Categories</h5>
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.Categories.Count > 0)
+            {
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Category ID</th>
+                            <th>Category Name</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <tr>
+                                <td>@category.CategoryId</td>
+
+                                <td>
+                                    <form asp-controller="Organiser"
+                                          asp-action="UpdateCategory"
+                                          asp-route-eventId="@Model.EventId"
+                                          asp-route-categoryId="@category.CategoryId"
+                                          method="post"
+                                          class="d-flex gap-2">
+
+                                        <input type="text"
+                                               name="CategoryName"
+                                               value="@category.CategoryName"
+                                               class="form-control"
+                                               required />
+
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            Save
+                                        </button>
+
+                                    </form>
+                                </td>
+
+                                <td>
+                                    <!-- Delete functionality will be added next. -->
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="text-muted">
+                    No categories have been added to this event yet.
+                </p>
+            }
+
+        </div>
+    </div>
+
+
+</div>

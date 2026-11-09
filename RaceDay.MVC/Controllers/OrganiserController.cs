@@ -70,7 +70,8 @@ namespace RaceDay.MVC.Controllers
          * Returns both the API status code and the deserialised event list.
          */
         private async Task<(System.Net.HttpStatusCode StatusCode,
-                            List<EventApiResponse>? Events)> GetOrganiserEventsAsync()
+                            List<EventApiResponse>? Events)> 
+                            GetOrganiserEventsAsync()
         {
             using var response = await _api.SendAsync(
                 HttpMethod.Get,
@@ -84,6 +85,36 @@ namespace RaceDay.MVC.Controllers
             }
 
             return (response.StatusCode, events);
+        }
+
+
+        /*
+         * Retrieves the categories for a specific event.
+         * Returns an empty list if the API call fails or returns no categories.
+         */
+        private async Task<List<CategoryApiResponse>> 
+                            GetEventCategoriesAsync(int eventId)
+        {
+            HttpResponseMessage response = await _api
+                                                 .SendAsync(
+                                                            HttpMethod.Get,
+                                                            $"api/events/{eventId}/categories"
+                );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new List<CategoryApiResponse>();
+            }
+
+            List<CategoryApiResponse>? categories =
+                await _api.ReadAsync<List<CategoryApiResponse>>(response);
+
+            if (categories == null)
+            {
+                return new List<CategoryApiResponse>();
+            }
+
+            return categories;
         }
 
 
@@ -251,6 +282,259 @@ namespace RaceDay.MVC.Controllers
             }
 
             return View(result.Events);
+        }
+
+
+        /*
+         * MANAGE CATEGORIES - GET
+         * Retrieves and displays the categories belonging to a selected event.
+         */
+        [HttpGet]
+        public async Task<IActionResult> ManageCategories(int eventId)
+        {
+            IActionResult? accessResult = CheckOrganiserAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            var result = await GetOrganiserEventsAsync();                               // Retrieve the events belonging to this organiser.
+
+            if (result.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (!IsSuccessfulStatusCode(result.StatusCode) || result.Events == null)
+                return RedirectToAction(nameof(Events));
+
+            EventApiResponse? selectedEvent = null;                                     // Confirm that the selected event belongs to this organiser.
+
+            foreach (EventApiResponse eventItem in result.Events)
+            {
+                if (eventItem.EventId == eventId)
+                {
+                    selectedEvent = eventItem;
+                    break;
+                }
+            }
+
+            if (selectedEvent == null)
+                return RedirectToAction(nameof(Events));
+
+            List<CategoryApiResponse> categories =
+                await GetEventCategoriesAsync(eventId);                                 // Retrieve the categories belonging to the selected event.
+
+            CategoryManagementViewModel model = new CategoryManagementViewModel
+            {
+                EventId = selectedEvent.EventId,
+                EventName = selectedEvent.EventName,
+                Categories = categories
+            };
+
+            return View(model);
+        }
+
+        /*
+         * CREATE CATEGORY - POST
+         * Validates and sends a new category to the API for the selected event.
+         */
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateCategory(
+            int eventId,
+            CategoryManagementViewModel model)
+        {
+            IActionResult? accessResult = CheckOrganiserAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            // Confirm that the selected event belongs to this organiser.
+            var result = await GetOrganiserEventsAsync();
+
+            if (result.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (!IsSuccessfulStatusCode(result.StatusCode) || result.Events == null)
+                return RedirectToAction(nameof(Events));
+
+            bool eventBelongsToOrganiser = false;
+
+            foreach (EventApiResponse eventItem in result.Events)
+            {
+                if (eventItem.EventId == eventId)
+                {
+                    eventBelongsToOrganiser = true;
+                    break;
+                }
+            }
+
+            if (!eventBelongsToOrganiser)
+                return RedirectToAction(nameof(Events));
+
+            if (!ModelState.IsValid)
+            {
+                TempData["ErrorMessage"] = "Please enter a valid category name.";
+                return RedirectToAction(nameof(ManageCategories), new { eventId });
+            }
+
+            // Prepare the API request.
+            CategoryRequest request = new CategoryRequest
+            {
+                CategoryName = model.CategoryName.Trim()
+            };
+
+            using var response = await _api.SendAsync(
+                HttpMethod.Post,
+                $"api/events/{eventId}/categories",
+                request);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                return RedirectToAction("AccessDenied", "Home");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] =
+                    "The category could not be created. Please try again.";
+
+                return RedirectToAction(nameof(ManageCategories), new { eventId });
+            }
+
+            TempData["SuccessMessage"] = "Category created successfully.";
+
+            return RedirectToAction(nameof(ManageCategories), new { eventId });
+        }
+
+        /*
+         * UPDATE CATEGORY - POST
+         * Updates an existing category through the RaceDay API.
+         */
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateCategory(
+            int eventId,
+            int categoryId,
+            CategoryManagementViewModel model)
+        {
+            IActionResult? accessResult = CheckOrganiserAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            // Confirm that the event belongs to this organiser.
+            var result = await GetOrganiserEventsAsync();
+
+            if (result.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (!IsSuccessfulStatusCode(result.StatusCode) || result.Events == null)
+                return RedirectToAction(nameof(Events));
+
+            bool eventBelongsToOrganiser = false;
+
+            foreach (EventApiResponse eventItem in result.Events)
+            {
+                if (eventItem.EventId == eventId)
+                {
+                    eventBelongsToOrganiser = true;
+                    break;
+                }
+            }
+
+            if (!eventBelongsToOrganiser)
+                return RedirectToAction(nameof(Events));
+
+            if (!ModelState.IsValid)
+            {
+                TempData["ErrorMessage"] = "Please enter a valid category name.";
+                return RedirectToAction(nameof(ManageCategories), new { eventId });
+            }
+
+            // Prepare the updated category information.
+            CategoryRequest request = new CategoryRequest
+            {
+                CategoryName = model.CategoryName.Trim()
+            };
+
+            using var response = await _api.SendAsync(
+                HttpMethod.Put,
+                $"api/events/{eventId}/categories/{categoryId}",
+                request);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                return RedirectToAction("AccessDenied", "Home");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "The category could not be updated.";
+                return RedirectToAction(nameof(ManageCategories), new { eventId });
+            }
+
+            TempData["SuccessMessage"] = "Category updated successfully.";
+
+            return RedirectToAction(nameof(ManageCategories), new { eventId });
+        }
+
+        /*
+         * DELETE CATEGORY - POST
+         * Deletes an existing category through the RaceDay API.
+         */
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteCategory(int eventId, int categoryId)
+        {
+            IActionResult? accessResult = CheckOrganiserAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            // Confirm that the event belongs to this organiser.
+            var result = await GetOrganiserEventsAsync();
+
+            if (result.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (!IsSuccessfulStatusCode(result.StatusCode) || result.Events == null)
+                return RedirectToAction(nameof(Events));
+
+            bool eventBelongsToOrganiser = false;
+
+            foreach (EventApiResponse eventItem in result.Events)
+            {
+                if (eventItem.EventId == eventId)
+                {
+                    eventBelongsToOrganiser = true;
+                    break;
+                }
+            }
+
+            if (!eventBelongsToOrganiser)
+                return RedirectToAction(nameof(Events));
+
+            // Send the delete request to the API.
+            using var response = await _api.SendAsync(
+                HttpMethod.Delete,
+                $"api/events/{eventId}/categories/{categoryId}");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                return RedirectToAction("AccessDenied", "Home");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "The category could not be deleted.";
+                return RedirectToAction(nameof(ManageCategories), new { eventId });
+            }
+
+            TempData["SuccessMessage"] = "Category deleted successfully.";
+
+            return RedirectToAction(nameof(ManageCategories), new { eventId });
         }
 
 

@@ -31,17 +31,17 @@ namespace RaceDay.Mvc.ViewModels
         public DateTime EventDate { get; set; } = DateTime.Today.AddDays(1);
 
         [Required]
-        [Range(typeof(decimal), "0.01", "1000",
+        [Range(0.01, 1000,
             ErrorMessage = "Distance must be greater than zero.")]
         public decimal Distance { get; set; }
 
         [Required(ErrorMessage = "Please select an event type.")]
-        [RegularExpression("^(Run|Walk|Cycle)$",
-            ErrorMessage = "Event type must be Run, Walk or Cycle.")]
+        [RegularExpression("^(run|walk|cycle)$",
+            ErrorMessage = "Event type must be run, walk or cycle.")]
         [Display(Name = "Event Type")]
-        public string EventType { get; set; } = "Run";
+        public string EventType { get; set; } = "run";
 
         [Required]
-        public string Status { get; set; } = "Upcoming";
+        public string Status { get; set; } = "scheduled";
     }
 }

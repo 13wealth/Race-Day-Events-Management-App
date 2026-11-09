@@ -194,6 +194,21 @@ namespace RaceDay.API.Services
             response.Role = user.Role;
             response.StatusCode = 200;
 
+            // Get FirstName and LastName from Profile's role-specific data
+            if (user.Profile != null)
+            {
+                if (user.Role.Equals("Organiser", StringComparison.OrdinalIgnoreCase) && user.Profile.Organiser != null)
+                {
+                    response.FirstName = user.Profile.Organiser.FirstName ?? "";
+                    response.LastName = user.Profile.Organiser.LastName ?? "";
+                }
+                else if (user.Role.Equals("Participant", StringComparison.OrdinalIgnoreCase) && user.Profile.Participant != null)
+                {
+                    response.FirstName = user.Profile.Participant.FirstName ?? "";
+                    response.LastName = user.Profile.Participant.LastName ?? "";
+                }
+            }
+
             return response;
         }
 
@@ -243,6 +258,8 @@ namespace RaceDay.API.Services
             public string Username { get; set; }
             public string Email { get; set; }
             public string Role { get; set; }
+            public string FirstName { get; set; }
+            public string LastName { get; set; }
             public string Error { get; set; }
             public int StatusCode { get; set; }
         }
