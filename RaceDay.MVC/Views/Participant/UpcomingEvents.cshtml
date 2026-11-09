@@ -1,0 +1,161 @@
+﻿@model RaceDay.Mvc.ViewModels.ParticipantEventsViewModel
+
+@{
+    ViewData["Title"] = "Upcoming Events";
+}
+
+<div class="container mt-4">
+
+    <div class="mb-4">
+        <h2>Upcoming Race Events</h2>
+        <p class="text-muted">Explore available races and find an event to enter.</p>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <form asp-action="UpcomingEvents" method="get">
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <label class="form-label">Search events</label>
+                        <input type="text"
+                               name="searchTerm"
+                               value="@Model.SearchTerm"
+                               class="form-control"
+                               placeholder="Search by name or description" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Event Type</label>
+                        <select name="eventType" class="form-select">
+                            <option value="">All Types</option>
+
+                            @foreach (string type in Model.EventTypes)
+                            {
+                                if (Model.SelectedEventType == type)
+                                {
+                                    <option value="@type" selected>@type</option>
+                                }
+                                else
+                                {
+                                    <option value="@type">@type</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Location</label>
+                        <select name="location" class="form-select">
+                            <option value="">All Locations</option>
+
+                            @foreach (string place in Model.Locations)
+                            {
+                                if (Model.SelectedLocation == place)
+                                {
+                                    <option value="@place" selected>@place</option>
+                                }
+                                else
+                                {
+                                    <option value="@place">@place</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            Search
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="mt-3">
+                    <a asp-action="UpcomingEvents" class="btn btn-outline-secondary btn-sm">
+                        Clear Filters
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    @if (Model.Events.Count == 0)
+    {
+        <div class="alert alert-info">
+            No upcoming events match your search.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+
+            @foreach (var eventItem in Model.Events)
+            {
+                <div class="col-md-6 col-lg-4">
+
+                    <div class="card h-100 shadow-sm">
+
+                        <div class="card-body">
+
+                            <h5 class="card-title">@eventItem.EventName</h5>
+
+                            <p class="text-muted">
+                                @eventItem.Description
+                            </p>
+
+                            <hr />
+
+                            <p>
+                                <strong>Location:</strong>
+                                @eventItem.Location
+                            </p>
+
+                            <p>
+                                <strong>Date:</strong>
+                                @eventItem.EventDate.ToString("dd MMM yyyy")
+                            </p>
+
+                            <p>
+                                <strong>Distance:</strong>
+                                @eventItem.Distance km
+                            </p>
+
+                            <p>
+                                <strong>Type:</strong>
+                                @eventItem.EventType
+                            </p>
+
+                            <p>
+                                <strong>Status:</strong>
+                                @eventItem.Status
+                            </p>
+
+                            <a asp-action="EventDetails"
+                               asp-route-eventId="@eventItem.EventId"
+                               class="btn btn-primary w-100">
+                                View Event
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+
+</div>
