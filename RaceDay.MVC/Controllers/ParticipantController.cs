@@ -359,5 +359,64 @@ namespace RaceDay.MVC.Controllers
             return RedirectToAction(nameof(EventDetails),
                 new { eventId = eventId });
         }
+
+        /*
+         * Retrieves all recorded race results belonging to the logged-in participant.
+         * 1. Checks participant authentication and access.
+         * 2. Retrieves the participant's results from the RaceDay API.
+         * 3. Handles API errors.
+         * 4. Displays the participant's race history and finishing positions.
+         */
+        [HttpGet]
+        public async Task<IActionResult> MyResults()
+        {
+            if (!IsLoggedIn())
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            if (!IsParticipant())
+            {
+                return Forbid();
+            }
+
+            ParticipantResultsViewModel model =
+                new ParticipantResultsViewModel();
+
+            HttpResponseMessage response = await _api.SendAsync(
+                HttpMethod.Get, "api/results/mine");
+
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] MyResults response status: {response.StatusCode}");
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                TempData["ErrorMessage"] = "Your session has expired. Please log in again.";
+                return RedirectToAction("Login", "Auth");
+            }
+
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                TempData["ErrorMessage"] = "You do not have permission to view results.";
+                return View(model);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "Unable to retrieve your race results. Please try again later.";
+                return View(model);
+            }
+
+            List<ParticipantResultApiResponse>? results =
+                await _api.ReadAsync<List<ParticipantResultApiResponse>>(response);
+
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] MyResults deserialized results count: {results?.Count ?? 0}");
+
+            if (results != null)
+            {
+                model.Results = results;
+            }
+
+            return View(model);
+        }
     }
 }

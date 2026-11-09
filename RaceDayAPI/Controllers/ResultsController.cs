@@ -117,5 +117,32 @@ namespace RaceDay.API.Controllers
                 position = response.Position
             });
         }
+
+        /// <summary>
+        /// Retrieves all race results belonging to the logged-in participant.
+        /// Only authenticated participants can access their own results.
+        /// </summary>
+        /// <returns>A list of the participant's race results.</returns>
+        [HttpGet("results/mine")]
+        [RequireRole("participant")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        public IActionResult GetMyResults()
+        {
+            List<ResultService.ParticipantResultResponse> results =
+                _resultService.GetMyResults();
+
+            return Ok(results.Select(result => new
+            {
+                results_id = result.ResultsId,
+                enrolment_id = result.EnrollmentId,
+                event_name = result.EventName,
+                event_date = result.EventDate,
+                category_name = result.CategoryName,
+                start_time = result.StartTime,
+                finish_time = result.FinishTime,
+                position = result.Position
+            }));
+        }
     }
 }

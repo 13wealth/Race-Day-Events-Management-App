@@ -1,0 +1,47 @@
+﻿@model RaceDay.Mvc.ViewModels.ParticipantResultsViewModel
+
+@{
+    ViewData["Title"] = "My Results";
+}
+
+<div class="container mt-4">
+    <h2>My Race Results</h2>
+    <p>View your race history and finishing positions.</p>
+
+    @if (Model.Results == null || !Model.Results.Any())
+    {
+        <div class="alert alert-info mt-3">
+            You don't have any recorded race results yet.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive mt-3">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Event Date</th>
+                        <th>Category</th>
+                        <th>Start Time</th>
+                        <th>Finish Time</th>
+                        <th>Position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var result in Model.Results)
+                    {
+                        <tr>
+                            <td>@result.EventName</td>
+                            <td>@result.EventDate.ToString("dd MMM yyyy")</td>
+                            <td>@result.CategoryName</td>
+                            <td>@result.StartTime.ToString("HH:mm")</td>
+                            <td>@result.FinishTime.ToString("HH:mm")</td>
+                            <td>@result.Position</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

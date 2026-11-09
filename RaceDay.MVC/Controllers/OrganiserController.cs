@@ -730,6 +730,78 @@ namespace RaceDay.MVC.Controllers
         }
 
         /*
+         * Displays all enrollments for the organiser's events.
+         * 1. Verifies that the logged-in user is an organiser.
+         * 2. Retrieves all the organiser's events.
+         * 3. Fetches enrollments for each event.
+         * 4. Applies search filtering if provided.
+         * 5. Passes the enrollment information to the view.
+         */
+        public async Task<IActionResult> Enrollments(string? searchTerm)
+        {
+            IActionResult? accessResult = CheckOrganiserAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            var result = await GetOrganiserEventsAsync();
+
+            if (result.StatusCode == HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (result.Events == null)
+            {
+                return View(new OrganiserEnrollmentsViewModel());
+            }
+
+            OrganiserEnrollmentsViewModel model = new OrganiserEnrollmentsViewModel();
+            model.SearchTerm = searchTerm ?? "";
+
+            foreach (EventApiResponse eventItem in result.Events)
+            {
+                HttpResponseMessage response = await _api.SendAsync(
+                    HttpMethod.Get,
+                    $"api/events/{eventItem.EventId}/enrolments");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    List<EnrollmentApiResponse>? enrollments =
+                        await _api.ReadAsync<List<EnrollmentApiResponse>>(response);
+
+                    if (enrollments != null)
+                    {
+                        foreach (EnrollmentApiResponse enrollment in enrollments)
+                        {
+                            model.Enrollments.Add(new EnrollmentWithEventInfo
+                            {
+                                EnrollmentId = enrollment.EnrollmentId,
+                                ParticipantId = enrollment.ParticipantId,
+                                ParticipantName = enrollment.ParticipantName,
+                                EventId = eventItem.EventId,
+                                EventName = eventItem.EventName,
+                                CategoryId = enrollment.CategoryId,
+                                CategoryName = enrollment.CategoryName,
+                                EntryDate = enrollment.EntryDate,
+                                Status = enrollment.Status
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                model.Enrollments = model.Enrollments.Where(e =>
+                    e.ParticipantName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    e.EventName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    e.CategoryName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+            }
+
+            return View(model);
+        }
+
+        /*
          * Displays enrolments for a selected event.
          * 1. Verifies that the logged-in user is an organiser.
          * 2. Confirms that the event belongs to the organiser.

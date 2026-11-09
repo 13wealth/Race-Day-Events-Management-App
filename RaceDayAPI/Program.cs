@@ -11,6 +11,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(ConfigureSwagger);
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", builder =>
+    {
+        builder.WithOrigins("http://localhost:5097", "https://localhost:7180", 
+                          "http://localhost:5050", "http://localhost:5051", "http://localhost:5052")
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials();
+    });
+});
 builder.Services.AddDbContext<RaceDayContext>(ConfigureDatabase);
 builder.Services.AddScoped<IPasswordHasher<RaceDayUser>, PasswordHasher<RaceDayUser>>();
 builder.Services.AddDistributedMemoryCache();
@@ -34,6 +45,7 @@ if (app.Environment.IsDevelopment())                                            
 }
 
 app.UseHttpsRedirection();                                                              // Enable middleware to redirect HTTP requests to HTTPS
+app.UseCors("AllowFrontend");                                                           // Enable CORS with credentials support
 app.UseSession();                                                                       // Enable middleware to manage user sessions
 app.UseAuthorization();                                                                 // Enable middleware to handle authorization for incoming requests
 app.MapControllers();                                                                   // Map controller routes to the corresponding endpoints
@@ -58,6 +70,7 @@ void ConfigureSession(SessionOptions options)
     options.IdleTimeout = TimeSpan.FromMinutes(30);                                     // Set the session timeout to 30 minutes 
     options.Cookie.HttpOnly = true;                                                     // Set the session cookie to be accessible only via HTTP requests
     options.Cookie.IsEssential = true;                                                  // Mark the session cookie as essential for the application to function properly
+    options.Cookie.SameSite = SameSiteMode.Lax;                                         // Set SameSite to Lax to allow cross-site cookies in development
 }
 
 /*

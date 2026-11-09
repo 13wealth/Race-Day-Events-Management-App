@@ -21,6 +21,7 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);                                     // If a session is inactive for 30 minutes, it will expire
     options.Cookie.HttpOnly = true;                                                     // Set the session cookie to be accessible only via HTTP
     options.Cookie.IsEssential = true;                                                  // Mark the session cookie as essential for the application
+    options.Cookie.SameSite = SameSiteMode.Lax;                                         // Set SameSite to Lax to allow cross-site cookies
 });
 
 builder.Services.AddHttpContextAccessor();	                                            // Adds a service to provide access to the current HTTP context

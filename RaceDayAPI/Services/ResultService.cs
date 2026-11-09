@@ -2,6 +2,7 @@ using RaceDay.API.Data;
 using RaceDay.Contracts;
 using RaceDay.API.Models;
 using RaceResult = RaceDay.API.Models.RaceResult;
+using Microsoft.Extensions.Logging;
 
 namespace RaceDay.API.Services
 {
@@ -9,11 +10,13 @@ namespace RaceDay.API.Services
     {
         private readonly RaceDayContext _db;
         private readonly AuthenticationHelper _authHelper;
+        private readonly ILogger<ResultService> _logger;
 
-        public ResultService(RaceDayContext db, AuthenticationHelper authHelper)
+        public ResultService(RaceDayContext db, AuthenticationHelper authHelper, ILogger<ResultService> logger)
         {
             _db = db;
             _authHelper = authHelper;
+            _logger = logger;
         }
 
         /*
@@ -231,6 +234,101 @@ namespace RaceDay.API.Services
             return response;
         }
 
+        /*
+         * Retrieves all race results belonging to the logged-in participant.
+         * Finds the participant's results through their enrolments.
+         * Includes the associated event and category information.
+         * Returns an empty list when the participant has no recorded results.
+         */
+        public List<ParticipantResultResponse> GetMyResults()
+        {
+            List<ParticipantResultResponse> results =
+                new List<ParticipantResultResponse>();
+
+            // Get the currently logged-in participant
+            Participant participant = _authHelper.GetLoggedInParticipant();
+
+            if (participant == null)
+            {
+                _logger.LogWarning("[GetMyResults] No participant found. Session may be invalid.");
+                return results;
+            }
+
+            _logger.LogInformation($"[GetMyResults] Found participant {participant.ParticipantId} - {participant.FirstName} {participant.LastName}");
+            _logger.LogInformation($"[GetMyResults] Total RaceResults in DB: {_db.Results.Count()}");
+            _logger.LogInformation($"[GetMyResults] Total Enrollments in DB: {_db.Enrollments.Count()}");
+            _logger.LogInformation($"[GetMyResults] Total Events in DB: {_db.Events.Count()}");
+            _logger.LogInformation($"[GetMyResults] Total Categories in DB: {_db.Categories.Count()}");
+
+            // Find results belonging to the participant
+            foreach (RaceResult raceResult in _db.Results)
+            {
+                Enrollment enrollment = null;
+
+                foreach (Enrollment en in _db.Enrollments)
+                {
+                    if (en.EnrollmentId == raceResult.EnrollmentId)
+                    {
+                        enrollment = en;
+                        break;
+                    }
+                }
+
+                if (enrollment == null ||
+                    enrollment.ParticipantId != participant.ParticipantId)
+                {
+                    _logger.LogDebug($"[GetMyResults] Skipping result {raceResult.ResultsId}: EnrollmentId={raceResult.EnrollmentId}, ParticipantId in enrollment={enrollment?.ParticipantId}, Expected={participant.ParticipantId}");
+                    continue;
+                }
+
+                _logger.LogDebug($"[GetMyResults] Processing result {raceResult.ResultsId} for participant {participant.ParticipantId}");
+
+                // Find the event associated with the enrolment
+                RaceEvent eventItem = null;
+
+                foreach (RaceEvent ev in _db.Events)
+                {
+                    if (ev.EventId == enrollment.EventId)
+                    {
+                        eventItem = ev;
+                        break;
+                    }
+                }
+
+                // Find the category selected by the participant
+                Category category = null;
+
+                foreach (Category cat in _db.Categories)
+                {
+                    if (cat.CategoryId == enrollment.CategoryId)
+                    {
+                        category = cat;
+                        break;
+                    }
+                }
+
+                if (eventItem == null || category == null)
+                    continue;
+
+                ParticipantResultResponse result =
+                    new ParticipantResultResponse();
+
+                result.ResultsId = raceResult.ResultsId;
+                result.EnrollmentId = raceResult.EnrollmentId;
+                result.EventName = eventItem.EventName;
+                result.EventDate = eventItem.EventDate;
+                result.CategoryName = category.CategoryName;
+                result.StartTime = raceResult.StartTime;
+                result.FinishTime = raceResult.FinishTime;
+                result.Position = raceResult.Position;
+
+                results.Add(result);
+            }
+
+            return results;
+        }
+
+
         public class ResultCreateResponse
         {
             public int ResultsId { get; set; }
@@ -251,6 +349,18 @@ namespace RaceDay.API.Services
             public int Position { get; set; }
             public string Error { get; set; }
             public int StatusCode { get; set; }
+        }
+
+        public class ParticipantResultResponse
+        {
+            public int ResultsId { get; set; }
+            public int EnrollmentId { get; set; }
+            public string EventName { get; set; }
+            public DateTime EventDate { get; set; }
+            public string CategoryName { get; set; }
+            public DateTime StartTime { get; set; }
+            public DateTime FinishTime { get; set; }
+            public int Position { get; set; }
         }
     }
 }
