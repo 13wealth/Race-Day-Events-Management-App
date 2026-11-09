@@ -1,5 +1,4 @@
-﻿
-/***************************************************************************************
+﻿/***************************************************************************************
  *                                    AUTH CONTROLLER                                  *
  * This controller connects the MVC registration and login forms to your existing      *
  *   Part 2 API.                                                                       *
