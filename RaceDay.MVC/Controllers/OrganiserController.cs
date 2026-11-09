@@ -11,9 +11,10 @@
  ***************************************************************************************/
 
 using Microsoft.AspNetCore.Mvc;
+using RaceDay.Contracts;
 using RaceDay.Mvc.ViewModels;
 using RaceDay.MVC.Services;
-using RaceDay.Contracts;
+using System.Net;
 
 namespace RaceDay.MVC.Controllers
 {
@@ -726,6 +727,77 @@ namespace RaceDay.MVC.Controllers
             TempData["SuccessMessage"] = "Event deleted successfully.";
 
             return RedirectToAction(nameof(Events));
+        }
+
+        /*
+         * Displays enrolments for a selected event.
+         * 1. Verifies that the logged-in user is an organiser.
+         * 2. Confirms that the event belongs to the organiser.
+         * 3. Retrieves the event's enrolments from the RaceDay API.
+         * 4. Passes the enrolment information to the view.
+         */
+        public async Task<IActionResult> EventEnrollments(int eventId)
+        {
+            IActionResult accessResult = CheckOrganiserAccess();
+
+            if (accessResult != null)
+            {
+                return accessResult;
+            }
+
+            (HttpStatusCode StatusCode, List<EventApiResponse>? Events) result =
+                await GetOrganiserEventsAsync();
+
+            if (result.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            if (result.Events == null)
+            {
+                return RedirectToAction("Events");
+            }
+
+            EventApiResponse selectedEvent = null;
+
+            foreach (EventApiResponse eventItem in result.Events)
+            {
+                if (eventItem.EventId == eventId)
+                {
+                    selectedEvent = eventItem;
+                    break;
+                }
+            }
+
+            if (selectedEvent == null)
+            {
+                return RedirectToAction("Events");
+            }
+
+            HttpResponseMessage response = await _api.SendAsync(
+                HttpMethod.Get,
+                $"api/events/{eventId}/enrolments");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "Unable to retrieve event enrolments.";
+                return RedirectToAction("Events");
+            }
+
+            List<EnrollmentApiResponse>? enrollments =
+                await _api.ReadAsync<List<EnrollmentApiResponse>>(response);
+
+            EventEnrollmentViewModel model = new EventEnrollmentViewModel();
+
+            model.EventId = selectedEvent.EventId;
+            model.EventName = selectedEvent.EventName;
+
+            if (enrollments != null)
+            {
+                model.Enrollments = enrollments;
+            }
+
+            return View(model);
         }
     }
 }

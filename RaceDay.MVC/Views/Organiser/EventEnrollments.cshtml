@@ -1,0 +1,90 @@
+﻿@model RaceDay.Mvc.ViewModels.EventEnrollmentViewModel
+
+@{
+    ViewData["Title"] = "Event Enrolments";
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Event Enrolments</h2>
+            <p class="text-muted">@Model.EventName</p>
+        </div>
+
+        <a asp-controller="Organiser"
+           asp-action="Events"
+           class="btn btn-outline-secondary">
+            Back to Events
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <h5 class="card-title mb-3">
+                Enrolled Participants
+            </h5>
+
+            @if (Model.Enrollments.Count == 0)
+            {
+                <div class="alert alert-info mb-0">
+                    No participants have enrolled in this event yet.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+
+                        <thead>
+                            <tr>
+                                <th>Participant</th>
+                                <th>Category</th>
+                                <th>Entry Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var enrollment in Model.Enrollments)
+                            {
+                                <tr>
+                                    <td>@enrollment.ParticipantName</td>
+                                    <td>@enrollment.CategoryName</td>
+                                    <td>@enrollment.EntryDate.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        @if (enrollment.Status.ToLower() == "confirmed")
+                                        {
+                                            <span class="badge bg-success">Confirmed</span>
+                                        }
+                                        else if (enrollment.Status.ToLower() == "pending")
+                                        {
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                @enrollment.Status
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            }
+
+        </div>
+    </div>
+
+</div>

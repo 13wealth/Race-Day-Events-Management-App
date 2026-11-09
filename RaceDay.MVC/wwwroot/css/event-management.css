@@ -53,12 +53,14 @@
 
 .event-table-container {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .event-table {
     width: 100%;
     border-collapse: collapse;
     background-color: white;
+    table-layout: auto;
 }
 
     .event-table th,
@@ -66,18 +68,23 @@
         padding: 13px;
         border-bottom: 1px solid #ddd;
         text-align: left;
-        white-space: nowrap;
     }
 
     .event-table th {
         background-color: #f4f6f8;
         font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .event-table td {
+        white-space: normal;
     }
 
 .event-actions {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
+    gap: 0.25rem;
 }
 
     .event-actions form {
@@ -193,5 +200,38 @@
 
     .event-form {
         padding: 18px;
+    }
+
+    .event-actions {
+        gap: 0.2rem;
+    }
+
+    .btn-action {
+        padding: 0.4rem 0.6rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    .btn-action i {
+        margin-right: 0.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .event-table {
+        font-size: 0.85rem;
+    }
+
+    .event-table th,
+    .event-table td {
+        padding: 8px;
+    }
+
+    .btn-action {
+        padding: 0.35rem 0.5rem !important;
+        font-size: 0.7rem !important;
+    }
+
+    .event-actions {
+        gap: 0.15rem;
     }
 }

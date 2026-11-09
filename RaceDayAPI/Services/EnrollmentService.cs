@@ -103,9 +103,16 @@ namespace RaceDay.API.Services
             return response;
         }
 
+
+        /*
+         * Retrieves all enrollments for the logged-in participant.
+         * Returns an EnrollmentListResponse containing enrollment details and 200 status code on success.
+         * Returns error response with 404 status code if the participant profile is not found.
+         */
         public EnrollmentListResponse GetMyEnrollments()
         {
             Participant participant = _authHelper.GetLoggedInParticipant();
+
             if (participant == null)
             {
                 EnrollmentListResponse participantErrorResponse = new EnrollmentListResponse();
@@ -115,6 +122,7 @@ namespace RaceDay.API.Services
             }
 
             List<Enrollment> mine = new List<Enrollment>();
+
             foreach (Enrollment en in _db.Enrollments)
             {
                 if (en.ParticipantId == participant.ParticipantId)
@@ -128,15 +136,40 @@ namespace RaceDay.API.Services
 
             foreach (Enrollment en in mine)
             {
+                Category category = null;
+                RaceEvent raceEvent = null;
+
+                foreach (Category c in _db.Categories)
+                {
+                    if (c.CategoryId == en.CategoryId)
+                    {
+                        category = c;
+                        break;
+                    }
+                }
+
+                foreach (RaceEvent e in _db.Events)
+                {
+                    if (e.EventId == en.EventId)
+                    {
+                        raceEvent = e;
+                        break;
+                    }
+                }
+
                 object enrollmentObj = new
                 {
                     enrolment_id = en.EnrollmentId,
                     participant_id = en.ParticipantId,
+                    participant_name = participant.FirstName + " " + participant.LastName,
                     event_id = en.EventId,
+                    event_name = raceEvent.EventName,
                     category_id = en.CategoryId,
+                    category_name = category.CategoryName,
                     entry_date = en.EntryDate,
                     status = en.Status
                 };
+
                 response.Enrollments.Add(enrollmentObj);
             }
 
@@ -144,9 +177,17 @@ namespace RaceDay.API.Services
             return response;
         }
 
+
+        /*
+         * Retrieves all enrollments for a specific event.
+         * Validates that the logged-in organiser is associated with the event.
+         * Returns an EnrollmentEventListResponse containing enrollment details and 200 status code on success.
+         * Returns error responses with appropriate status codes (404, 403) for validation failures or access restrictions.
+         */
         public EnrollmentEventListResponse GetEventEnrollments(int eventId)
         {
             Organiser organiser = _authHelper.GetLoggedInOrganiser();
+
             if (organiser == null)
             {
                 EnrollmentEventListResponse organiserErrorResponse = new EnrollmentEventListResponse();
@@ -156,6 +197,7 @@ namespace RaceDay.API.Services
             }
 
             RaceEvent found = null;
+
             foreach (RaceEvent e in _db.Events)
             {
                 if (e.EventId == eventId)
@@ -182,6 +224,7 @@ namespace RaceDay.API.Services
             }
 
             List<Enrollment> enrollments = new List<Enrollment>();
+
             foreach (Enrollment en in _db.Enrollments)
             {
                 if (en.EventId == eventId)
@@ -195,15 +238,39 @@ namespace RaceDay.API.Services
 
             foreach (Enrollment en in enrollments)
             {
+                Participant participant = null;
+                Category category = null;
+
+                foreach (Participant p in _db.Participants)
+                {
+                    if (p.ParticipantId == en.ParticipantId)
+                    {
+                        participant = p;
+                        break;
+                    }
+                }
+
+                foreach (Category c in _db.Categories)
+                {
+                    if (c.CategoryId == en.CategoryId)
+                    {
+                        category = c;
+                        break;
+                    }
+                }
+
                 object enrollmentObj = new
                 {
                     enrolment_id = en.EnrollmentId,
                     participant_id = en.ParticipantId,
+                    participant_name = participant.FirstName + " " + participant.LastName,
                     event_id = en.EventId,
                     category_id = en.CategoryId,
+                    category_name = category.CategoryName,
                     entry_date = en.EntryDate,
                     status = en.Status
                 };
+
                 response.Enrollments.Add(enrollmentObj);
             }
 
