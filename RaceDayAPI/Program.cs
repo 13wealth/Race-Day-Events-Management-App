@@ -5,6 +5,8 @@ using RaceDay.API.Data;
 using RaceDay.API.Models;
 using RaceDay.API.Services;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Azure.Storage.Blobs;
+using RaceDay.API.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +37,19 @@ builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<EnrollmentService>();
 builder.Services.AddScoped<ResultService>();
 builder.Services.AddScoped<ProfileService>();
+
+string? azureConnectionString = builder.Configuration["AzureBlobStorage:ConnectionString"];
+
+if (string.IsNullOrWhiteSpace(azureConnectionString))
+{
+    throw new InvalidOperationException(
+        "Azure Blob Storage connection string is missing.");
+}
+
+builder.Services.AddSingleton(
+    new BlobServiceClient(azureConnectionString));
+
+builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 
 var app = builder.Build();
 
