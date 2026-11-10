@@ -17,12 +17,12 @@ namespace RaceDay.API.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("RaceDayAPI.Models.Category", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Category", b =>
                 {
                     b.Property<int>("CategoryId")
                         .ValueGeneratedOnAdd()
@@ -53,7 +53,7 @@ namespace RaceDay.API.Migrations
                     b.ToTable("CATEGORY");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Enrollment", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Enrollment", b =>
                 {
                     b.Property<int>("EnrollmentId")
                         .ValueGeneratedOnAdd()
@@ -96,7 +96,7 @@ namespace RaceDay.API.Migrations
                     b.ToTable("ENROLLMENT");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Organiser", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Organiser", b =>
                 {
                     b.Property<int>("OrganiserId")
                         .ValueGeneratedOnAdd()
@@ -142,7 +142,7 @@ namespace RaceDay.API.Migrations
                     b.ToTable("ORGANISER");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Participant", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Participant", b =>
                 {
                     b.Property<int>("ParticipantId")
                         .ValueGeneratedOnAdd()
@@ -176,6 +176,11 @@ namespace RaceDay.API.Migrations
                         .HasColumnType("int")
                         .HasColumnName("profile_id");
 
+                    b.Property<string>("ProfileImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("profile_image_url");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at");
@@ -188,7 +193,7 @@ namespace RaceDay.API.Migrations
                     b.ToTable("PARTICIPANT");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Profile", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Profile", b =>
                 {
                     b.Property<int>("ProfileId")
                         .ValueGeneratedOnAdd()
@@ -213,7 +218,7 @@ namespace RaceDay.API.Migrations
                     b.ToTable("PROFILE");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.RaceDayUser", b =>
+            modelBuilder.Entity("RaceDay.API.Models.RaceDayUser", b =>
                 {
                     b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
@@ -261,7 +266,7 @@ namespace RaceDay.API.Migrations
                     b.ToTable("USER");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.RaceEvent", b =>
+            modelBuilder.Entity("RaceDay.API.Models.RaceEvent", b =>
                 {
                     b.Property<int>("EventId")
                         .ValueGeneratedOnAdd()
@@ -333,7 +338,7 @@ namespace RaceDay.API.Migrations
                     b.ToTable("EVENT");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.RaceResult", b =>
+            modelBuilder.Entity("RaceDay.API.Models.RaceResult", b =>
                 {
                     b.Property<int>("ResultsId")
                         .ValueGeneratedOnAdd()
@@ -374,7 +379,7 @@ namespace RaceDay.API.Migrations
                     b.ToTable("RESULTS");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Route", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Route", b =>
                 {
                     b.Property<int>("RouteId")
                         .ValueGeneratedOnAdd()
@@ -428,9 +433,9 @@ namespace RaceDay.API.Migrations
                     b.ToTable("ROUTE");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Category", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Category", b =>
                 {
-                    b.HasOne("RaceDayAPI.Models.RaceEvent", "Event")
+                    b.HasOne("RaceDay.API.Models.RaceEvent", "Event")
                         .WithMany("Categories")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -439,21 +444,21 @@ namespace RaceDay.API.Migrations
                     b.Navigation("Event");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Enrollment", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Enrollment", b =>
                 {
-                    b.HasOne("RaceDayAPI.Models.Category", "Category")
+                    b.HasOne("RaceDay.API.Models.Category", "Category")
                         .WithMany("Enrollments")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("RaceDayAPI.Models.RaceEvent", "Event")
+                    b.HasOne("RaceDay.API.Models.RaceEvent", "Event")
                         .WithMany("Enrollments")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("RaceDayAPI.Models.Participant", "Participant")
+                    b.HasOne("RaceDay.API.Models.Participant", "Participant")
                         .WithMany("Enrollments")
                         .HasForeignKey("ParticipantId")
                         .OnDelete(DeleteBehavior.NoAction)
@@ -466,42 +471,42 @@ namespace RaceDay.API.Migrations
                     b.Navigation("Participant");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Organiser", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Organiser", b =>
                 {
-                    b.HasOne("RaceDayAPI.Models.Profile", "Profile")
+                    b.HasOne("RaceDay.API.Models.Profile", "Profile")
                         .WithOne("Organiser")
-                        .HasForeignKey("RaceDayAPI.Models.Organiser", "ProfileId")
+                        .HasForeignKey("RaceDay.API.Models.Organiser", "ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Profile");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Participant", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Participant", b =>
                 {
-                    b.HasOne("RaceDayAPI.Models.Profile", "Profile")
+                    b.HasOne("RaceDay.API.Models.Profile", "Profile")
                         .WithOne("Participant")
-                        .HasForeignKey("RaceDayAPI.Models.Participant", "ProfileId")
+                        .HasForeignKey("RaceDay.API.Models.Participant", "ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Profile");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Profile", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Profile", b =>
                 {
-                    b.HasOne("RaceDayAPI.Models.RaceDayUser", "User")
+                    b.HasOne("RaceDay.API.Models.RaceDayUser", "User")
                         .WithOne("Profile")
-                        .HasForeignKey("RaceDayAPI.Models.Profile", "UserId")
+                        .HasForeignKey("RaceDay.API.Models.Profile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.RaceEvent", b =>
+            modelBuilder.Entity("RaceDay.API.Models.RaceEvent", b =>
                 {
-                    b.HasOne("RaceDayAPI.Models.Organiser", "Organiser")
+                    b.HasOne("RaceDay.API.Models.Organiser", "Organiser")
                         .WithMany("Events")
                         .HasForeignKey("OrganiserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -510,20 +515,20 @@ namespace RaceDay.API.Migrations
                     b.Navigation("Organiser");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.RaceResult", b =>
+            modelBuilder.Entity("RaceDay.API.Models.RaceResult", b =>
                 {
-                    b.HasOne("RaceDayAPI.Models.Enrollment", "Enrollment")
+                    b.HasOne("RaceDay.API.Models.Enrollment", "Enrollment")
                         .WithOne("Result")
-                        .HasForeignKey("RaceDayAPI.Models.RaceResult", "EnrollmentId")
+                        .HasForeignKey("RaceDay.API.Models.RaceResult", "EnrollmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Enrollment");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Route", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Route", b =>
                 {
-                    b.HasOne("RaceDayAPI.Models.RaceEvent", "Event")
+                    b.HasOne("RaceDay.API.Models.RaceEvent", "Event")
                         .WithMany("Routes")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -532,39 +537,39 @@ namespace RaceDay.API.Migrations
                     b.Navigation("Event");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Category", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Category", b =>
                 {
                     b.Navigation("Enrollments");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Enrollment", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Enrollment", b =>
                 {
                     b.Navigation("Result");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Organiser", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Organiser", b =>
                 {
                     b.Navigation("Events");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Participant", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Participant", b =>
                 {
                     b.Navigation("Enrollments");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.Profile", b =>
+            modelBuilder.Entity("RaceDay.API.Models.Profile", b =>
                 {
                     b.Navigation("Organiser");
 
                     b.Navigation("Participant");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.RaceDayUser", b =>
+            modelBuilder.Entity("RaceDay.API.Models.RaceDayUser", b =>
                 {
                     b.Navigation("Profile");
                 });
 
-            modelBuilder.Entity("RaceDayAPI.Models.RaceEvent", b =>
+            modelBuilder.Entity("RaceDay.API.Models.RaceEvent", b =>
                 {
                     b.Navigation("Categories");
 

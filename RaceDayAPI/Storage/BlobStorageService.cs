@@ -45,8 +45,7 @@ namespace RaceDay.API.Storage
             BlobContainerClient containerClient =
                 _blobServiceClient.GetBlobContainerClient(containerName);
 
-            await containerClient.CreateIfNotExistsAsync(
-                PublicAccessType.Blob);
+            await containerClient.CreateIfNotExistsAsync();                             // Ensure the container exists
 
             string fileName = $"profiles/{userId}/{Guid.NewGuid()}{extension}";
 

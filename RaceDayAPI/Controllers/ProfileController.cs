@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using RaceDay.Contracts;
 using RaceDay.API.Security;
 using RaceDay.API.Services;
+using RaceDay.API.Storage;
 
 namespace RaceDay.API.Controllers
 {
@@ -14,14 +15,19 @@ namespace RaceDay.API.Controllers
     public class ProfileController : ControllerBase
     {
         private readonly ProfileService _profileService;
+        private readonly IBlobStorageService _blobStorageService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProfileController"/> class.
         /// </summary>
         /// <param name="profileService">The profile service.</param>
-        public ProfileController(ProfileService profileService)
+        /// <param name="blobStorageService">The blob storage service.</param>
+        public ProfileController(ProfileService profileService, 
+                                 IBlobStorageService blobStorageService
+            )
         {
             _profileService = profileService;
+            _blobStorageService = blobStorageService;
         }
 
         /// <summary>
@@ -83,6 +89,40 @@ namespace RaceDay.API.Controllers
             }
 
             return Ok(response.Profile);
+        }
+
+        /// <summary>
+        /// Uploads a profile image for the currently authenticated user.
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
+        [HttpPost("image")]
+        [RequireRole]
+        public async Task<IActionResult> UploadProfileImage(
+            IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { error = "Please select an image." });
+
+            int? userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+                return Unauthorized();
+
+            try
+            {
+                string imageUrl =
+                    await _blobStorageService.UploadProfileImageAsync(
+                        file, userId.Value);
+
+                var result = _profileService.UpdateProfileImage(imageUrl);
+
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
     }
 }

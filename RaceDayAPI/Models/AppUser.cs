@@ -134,4 +134,8 @@ public class Participant
 
     public Profile Profile { get; set; } = null!;
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
+
+    [StringLength(500)]
+    [Column("profile_image_url", TypeName = "varchar(500)")]
+    public string? ProfileImageUrl { get; set; }
 }

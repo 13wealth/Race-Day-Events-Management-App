@@ -254,9 +254,60 @@ namespace RaceDay.API.Services
 
         public class ProfileUpdateResponse
         {
-            public object Profile { get; set; }
-            public string Error { get; set; }
+            public object? Profile { get; set; }
+            public string? Error { get; set; }
             public int StatusCode { get; set; }
+        }
+
+
+        /*
+         * Updates the profile image of the currently logged-in user.
+         * Retrieves the user ID from the authentication helper and session.
+         * Searches for the participant record and updates their profile image URL.
+         * Returns a ProfileUpdateResponse with updated profile image details and 200 status code on success.
+         * Returns error responses with appropriate status codes (401, 404) for authentication or profile lookup failures.
+         */
+        public ProfileUpdateResponse UpdateProfileImage(string imageUrl)
+        {
+            int? userId = _authHelper.GetUserId();
+
+            if (userId == null)
+            {
+                return new ProfileUpdateResponse
+                {
+                    Error = "User not authenticated.",
+                    StatusCode = 401
+                };
+            }
+
+            Participant participant = _db.Participants
+                .FirstOrDefault(p =>
+                    _db.Profiles.Any(profile =>
+                        profile.ProfileId == p.ProfileId &&
+                        profile.UserId == userId));
+
+            if (participant == null)
+            {
+                return new ProfileUpdateResponse
+                {
+                    Error = "Participant profile not found.",
+                    StatusCode = 404
+                };
+            }
+
+            participant.ProfileImageUrl = imageUrl;
+            participant.UpdatedAt = DateTime.UtcNow;
+
+            _db.SaveChanges();
+
+            return new ProfileUpdateResponse
+            {
+                Profile = new
+                {
+                    profile_image_url = participant.ProfileImageUrl
+                },
+                StatusCode = 200
+            };
         }
     }
 }

@@ -46,8 +46,16 @@ if (string.IsNullOrWhiteSpace(azureConnectionString))
         "Azure Blob Storage connection string is missing.");
 }
 
-builder.Services.AddSingleton(
-    new BlobServiceClient(azureConnectionString));
+builder.Services.AddSingleton<BlobServiceClient>(serviceProvider =>
+{
+    IConfiguration configuration =
+        serviceProvider.GetRequiredService<IConfiguration>();
+
+    string connectionString =
+        configuration["AzureBlobStorage:ConnectionString"];
+
+    return new BlobServiceClient(connectionString);
+});
 
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 
