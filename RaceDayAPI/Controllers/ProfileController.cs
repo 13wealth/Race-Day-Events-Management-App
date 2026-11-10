@@ -124,5 +124,30 @@ namespace RaceDay.API.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+
+        /// <summary>
+        /// Retrieves the profile image of the currently authenticated user.
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("image")]
+        [RequireRole]
+        public async Task<IActionResult> GetProfileImage()
+        {
+            string? imageUrl = _profileService.GetMyProfileImageUrl();
+
+            if (string.IsNullOrWhiteSpace(imageUrl))
+                return NotFound(new { error = "Profile image not found." });
+
+            var image = await _blobStorageService.DownloadProfileImageAsync(
+                imageUrl);
+
+            if (image.Content == null)
+                return NotFound(new { error = "Profile image not found." });
+
+            return File(
+                image.Content,
+                image.ContentType ?? "application/octet-stream");
+        }
     }
 }

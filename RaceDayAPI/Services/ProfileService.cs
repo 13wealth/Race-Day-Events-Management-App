@@ -309,5 +309,28 @@ namespace RaceDay.API.Services
                 StatusCode = 200
             };
         }
+
+
+        /*
+         * Retrieves the profile image URL of the currently logged-in user.
+         * Retrieves the user ID from the authentication helper and session.
+         * Searches for the participant record and retrieves their profile image URL.
+         * Returns the profile image URL if found, otherwise returns null.
+         */
+        public string? GetMyProfileImageUrl()
+        {
+            int? userId = _authHelper.GetUserId();
+
+            if (userId == null)
+                return null;
+
+            return _db.Participants
+                .Where(p =>
+                    _db.Profiles.Any(profile =>
+                        profile.ProfileId == p.ProfileId &&
+                        profile.UserId == userId.Value))
+                .Select(p => p.ProfileImageUrl)
+                .FirstOrDefault();
+        }
     }
 }

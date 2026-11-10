@@ -66,5 +66,50 @@ namespace RaceDay.API.Storage
 
             return blobClient.Uri.AbsoluteUri;
         }
+
+        public async Task<(byte[]? Content, string? ContentType)> DownloadProfileImageAsync(
+    string imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+                return (null, null);
+
+            string containerName =
+                _configuration["AzureBlobStorage:ContainerName"];
+
+            Uri imageUri = new Uri(imageUrl);
+
+            string containerPath = "/" + containerName + "/";
+
+            int containerIndex =
+                imageUri.AbsolutePath.IndexOf(
+                    containerPath,
+                    StringComparison.OrdinalIgnoreCase);
+
+            if (containerIndex < 0)
+                return (null, null);
+
+            string blobName = Uri.UnescapeDataString(
+                imageUri.AbsolutePath.Substring(
+                    containerIndex + containerPath.Length));
+
+            BlobContainerClient containerClient =
+                _blobServiceClient.GetBlobContainerClient(containerName);
+
+            BlobClient blobClient = containerClient.GetBlobClient(blobName);
+
+            try
+            {
+                var response = await blobClient.DownloadContentAsync();
+
+                return (
+                    response.Value.Content.ToArray(),
+                    response.Value.Details.ContentType
+                );
+            }
+            catch (Azure.RequestFailedException ex) when (ex.Status == 404)
+            {
+                return (null, null);
+            }
+        }
     }
 }
