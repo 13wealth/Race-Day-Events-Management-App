@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using RaceDay.MVC.Services;
 using RaceDay.Mvc.ViewModels;
 using System.Net;
+using System.Text.Json;
 
 namespace RaceDay.MVC.Controllers
 {
@@ -417,6 +418,173 @@ namespace RaceDay.MVC.Controllers
             }
 
             return View(model);
+        }
+
+
+        /*
+         * Displays the logged-in participant's profile.
+         * 1. Checks participant authentication and access.
+         * 2. Retrieves profile information from the RaceDay API.
+         * 3. Maps the response to the participant profile ViewModel.
+         * 4. Displays the profile page.
+         */
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            IActionResult? accessResult = CheckParticipantAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            HttpResponseMessage response = await _api.SendAsync(
+                HttpMethod.Get, "api/profile");
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "Unable to retrieve your profile.";
+                return View(new ParticipantProfileViewModel());
+            }
+
+            string json = await response.Content.ReadAsStringAsync();
+
+            using JsonDocument document = JsonDocument.Parse(json);
+
+            JsonElement root = document.RootElement;
+
+            if (!root.TryGetProperty("profile", out JsonElement profile))
+            {
+                TempData["ErrorMessage"] = "Profile information was not returned.";
+                return View(new ParticipantProfileViewModel());
+            }
+
+            ParticipantProfileViewModel model =
+                new ParticipantProfileViewModel();
+
+            model.FirstName = profile.GetProperty("first_name").GetString() ?? "";
+            model.LastName = profile.GetProperty("last_name").GetString() ?? "";
+            model.Phone = profile.GetProperty("phone").GetString() ?? "";
+
+            model.ProfileImageUrl = Url.Action(nameof(ProfileImage));
+
+            return View(model);
+        }
+
+
+        /*
+         * Updates the logged-in participant's personal information.
+         * 1. Checks participant authentication and access.
+         * 2. Sends updated details to the RaceDay API.
+         * 3. Handles the API response.
+         * 4. Returns the participant to the profile page.
+         */
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile(
+            ParticipantProfileViewModel model)
+        {
+            IActionResult? accessResult = CheckParticipantAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            var request = new
+            {
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Phone = model.Phone
+            };
+
+            HttpResponseMessage response = await _api.SendAsync(
+                HttpMethod.Put, "api/profile", request);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Auth");
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["SuccessMessage"] = "Your profile was updated successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Unable to update your profile.";
+            }
+
+            return RedirectToAction(nameof(Profile));
+        }
+
+
+        /*
+         * Retrieves the participant's profile image through the RaceDay API.
+         * 1. Checks participant authentication and access.
+         * 2. Requests the image from the API.
+         * 3. Returns the image to the browser.
+         */
+        [HttpGet]
+        public async Task<IActionResult> ProfileImage()
+        {
+            IActionResult? accessResult = CheckParticipantAccess();
+
+            if (accessResult != null)
+                return accessResult;
+
+            HttpResponseMessage response = await _api.SendAsync(
+                HttpMethod.Get, "api/profile/image");
+
+            if (!response.IsSuccessStatusCode)
+                return NotFound();
+
+            byte[] imageBytes = await response.Content.ReadAsByteArrayAsync();
+
+            string contentType =
+                response.Content.Headers.ContentType?.MediaType
+                ?? "application/octet-stream";
+
+            return File(imageBytes, contentType);
+        }
+
+        /*
+         * Uploads the participant's profile image.
+         * 1. Checks participant access.
+         * 2. Validates the selected image.
+         * 3. Sends the image to the RaceDay API.
+         * 4. Displays the result and returns to the profile page.
+         */
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadProfileImage(
+            ParticipantProfileViewModel model)
+        {
+            IActionResult accessResult = CheckParticipantAccess();
+
+            if (accessResult != null)
+            {
+                return accessResult;
+            }
+
+            if (model.ProfileImage == null || model.ProfileImage.Length == 0)
+            {
+                TempData["Error"] = "Please select an image.";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            using HttpResponseMessage response =
+                await _api.UploadFileAsync(
+                    "api/profile/image",
+                    model.ProfileImage);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["Success"] = "Profile image updated successfully.";
+            }
+            else
+            {
+                TempData["Error"] = "Unable to upload profile image.";
+            }
+
+            return RedirectToAction(nameof(Profile));
         }
     }
 }

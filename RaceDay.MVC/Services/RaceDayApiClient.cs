@@ -70,7 +70,7 @@ public class RaceDayApiClient
         string apiCookie = _httpContextAccessor
                            .HttpContext
                            .Session
-                           .GetString("ApiSessionCookie");                             
+                           .GetString("ApiSessionCookie");
 
         if (!string.IsNullOrWhiteSpace(apiCookie))                                     // Checks whether MVC has an API session cookie stored in its session
         {
@@ -95,7 +95,7 @@ public class RaceDayApiClient
     {
         var client = CreateClient();                                                    // Calls CreateClient() to obtain the configured HTTP client
         using var request = CreateRequest(method, url);                                 // Calls CreateRequest() to prepare the request
-        
+
         if (body != null)                                                               // Checks whether data was supplied in body
         {
             request.Content = JsonContent.Create(body);                                 // If data exists, converts it into JSON (Serialize)
@@ -144,7 +144,7 @@ public class RaceDayApiClient
         string? sessionHeader = values
                                 .FirstOrDefault(v =>
                                                     v.StartsWith(
-                                                                ".AspNetCore.Session=", 
+                                                                ".AspNetCore.Session=",
                                                                 StringComparison.OrdinalIgnoreCase
                                                                 )
                 );
@@ -155,6 +155,39 @@ public class RaceDayApiClient
                                                                                          * The ?. operator ensures that if sessionHeader is 
                                                                                          *   null, the method returns null instead of causing an error.
                                                                                          */
+    }
+
+    /*
+     * Uploads a file to the RaceDay API.
+     * 1. Creates an HTTP POST request.
+     * 2. Forwards the participant's existing API session cookie.
+     * 3. Sends the selected file as multipart form data.
+     * 4. Returns the API response.
+     */
+    public async Task<HttpResponseMessage> UploadFileAsync(
+        string url,
+        IFormFile file)
+    {
+        HttpClient client = CreateClient();
+
+        using HttpRequestMessage request =
+            CreateRequest(HttpMethod.Post, url);
+
+        using MultipartFormDataContent content =
+            new MultipartFormDataContent();
+
+        using StreamContent fileContent =
+            new StreamContent(file.OpenReadStream());
+
+        fileContent.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue(
+                file.ContentType);
+
+        content.Add(fileContent, "file", file.FileName);
+
+        request.Content = content;
+
+        return await client.SendAsync(request);
     }
 }
 
