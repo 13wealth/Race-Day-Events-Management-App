@@ -151,6 +151,24 @@ public class AuthController : Controller
                                         auth.FirstName ?? auth.Email
             );
 
+        // Fetch and store profile image URL for participants
+        if (auth.Role.Equals("Participant", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var profileImageResponse = await _api.SendAsync(HttpMethod.Get, "api/profile/image");
+                if (profileImageResponse.IsSuccessStatusCode)
+                {
+                    // Store the profile image action URL in session so header can use it
+                    HttpContext.Session.SetString("ProfileImageUrl", Url.Action("ProfileImage", "Participant"));
+                }
+            }
+            catch
+            {
+                // If unable to fetch profile image, continue without it (will use default avatar)
+            }
+        }
+
         if (auth.Role.Equals(
                             "Organiser",
                             StringComparison.OrdinalIgnoreCase

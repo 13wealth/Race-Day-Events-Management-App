@@ -578,6 +578,9 @@ namespace RaceDay.MVC.Controllers
             if (response.IsSuccessStatusCode)
             {
                 TempData["Success"] = "Profile image updated successfully.";
+
+                // Update the session with the profile image URL so it appears in the header immediately
+                HttpContext.Session.SetString("ProfileImageUrl", Url.Action(nameof(ProfileImage)));
             }
             else
             {
