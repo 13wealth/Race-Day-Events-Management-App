@@ -4,12 +4,26 @@
 
 RaceDay is an Events Management application designed to manage race events, organisers, participants, event categories, enrolments and race results.
 
-The project includes a SQL Server database design, API endpoint documentation and an Entity Relationship Diagram (ERD).
+The project is delivered in three parts:
+
+1. **Documentation and database design**: SQL Server database script, API endpoint documentation and an Entity Relationship Diagram (ERD).
+2. **REST API**: an ASP.NET Core Web API (.NET 10) with authentication, role-based authorisation and unit tests.
+3. **MVC web application**: an ASP.NET Core MVC front end that consumes the API, with Azure Blob Storage support in the API and a Docker container for the MVC app.
 
 Illustration video: [▶️ RaceDay illustration video](https://youtu.be/mhHBowUxImE)
 
-## Repository Structure
+## Architecture
 
+```plaintext
+Browser  →  RaceDay.MVC  →  RaceDayAPI  →  SQL Server
+                                   └─────→  Azure Blob Storage
+```
+
+- `RaceDay.MVC` does not access the database directly. All data comes from the API over HTTP, using the address set in `ApiSettings:BaseUrl`.
+- `RaceDay.Contracts` holds the data transfer objects (DTOs) shared by the API and the MVC app.
+- Azure Blob Storage is used by the API for image storage (container `raceday-images`).
+
+## Repository Structure
 
 ```plaintext
 ST10472346-RaceDay-Events-Management-App/
@@ -23,24 +37,44 @@ ST10472346-RaceDay-Events-Management-App/
 │   ├── race_day_api_endpoints.pdf
 │   └── race_day_erd.pdf
 │
-├── RaceDayAPI/
+├── RaceDay.Contracts/        # Shared DTOs (auth, categories, enrolments, events, profiles, results)
+│
+├── RaceDayAPI/               # REST API project (RaceDay.API)
 │   ├── Controllers/          # API endpoint controllers
+│   ├── Data/                 # EF Core DbContext
+│   ├── Migrations/           # EF Core migrations
 │   ├── Models/               # Data entities and database models
-│   ├── Data/                 # EF Core DbContext and migrations
-│   ├── DTO/                  # Data transfer objects
 │   ├── Security/             # Authentication and authorization
 │   ├── Services/             # Business logic
+│   ├── Storage/              # Storage integration
 │   ├── appsettings.json      # Configuration
 │   ├── Program.cs            # Application startup
-│   └── RaceDayAPI.csproj     # Main API project
+│   └── RaceDay.API.csproj    # API project file
+│
+├── RaceDay.MVC/              # MVC web application
+│   ├── Controllers/
+│   ├── Models/
+│   ├── Services/             # API client services
+│   ├── ViewModels/
+│   ├── Views/
+│   ├── wwwroot/
+│   ├── appsettings.json      # Contains ApiSettings:BaseUrl
+│   ├── Dockerfile            # Container build instructions for the MVC app
+│   ├── Program.cs
+│   └── RaceDay.MVC.csproj
 │
 ├── RaceDayAPI.Test/
-│   ├── AuthAndRoleTests.cs   # Authentication and authorization tests
-│   ├── TestHelpers.cs        # Test utilities and fixtures
+│   ├── AuthControllerTests.cs
+│   ├── EnrollmentControllerTests.cs
+│   ├── EventControllerTests.cs
+│   ├── RoleTests.cs
 │   └── RaceDayAPI.Test.csproj
 │
+├── .dockerignore             # Files excluded from the Docker build context
+├── RaceDayAPI.slnx           # Solution file
 └── README.md
 ```
+
 ### Folder Description
 
 | Folder/File                       | Description                                                                                    |
@@ -49,8 +83,12 @@ ST10472346-RaceDay-Events-Management-App/
 | `docs/RaceDay.sql`                | SQL Server database creation script and sample seed data.                                      |
 | `docs/race_day_api_endpoints.pdf` | API endpoint documentation for the RaceDay application.                                        |
 | `docs/race_day_erd.pdf`           | Entity Relationship Diagram showing the database structure.                                    |
+| `RaceDay.Contracts/`              | Class library with the DTOs shared by the API and the MVC app.                                 |
 | `RaceDayAPI/`                     | Main .NET 10 ASP.NET Core API project with controllers, models, and business logic.            |
-| `RaceDayAPI.Test/`                | Unit and integration tests for the API using xUnit framework.                                 |
+| `RaceDay.MVC/`                    | .NET 10 ASP.NET Core MVC web application that consumes the API.                                |
+| `RaceDayAPI.Test/`                | Unit tests for the API using the xUnit framework.                                              |
+| `.dockerignore`                   | Keeps build output and other unneeded files out of the Docker build.                           |
+| `RaceDayAPI.slnx`                 | Visual Studio solution containing all four projects.                                           |
 | `README.md`                       | Project documentation and repository information.                                              |
 
 ## Database
@@ -89,28 +127,118 @@ The `RaceDayAPI` project provides a complete REST API implementation in .NET 10 
 - **Controllers**: API endpoints for authentication and event management
 - **Models**: Entity definitions aligned with database schema
 - **Data**: EF Core DbContext for database operations
-- **DTO**: Request/Response models for API communication
+- **Contracts**: Request/Response models (in the `RaceDay.Contracts` project)
 - **Security**: Custom authorization attributes and authentication logic
-- **Tests**: Unit and integration tests ensuring reliability
+- **Tests**: Unit tests ensuring reliability
 
-### Building & Running
+## MVC Web Application
+
+The `RaceDay.MVC` project is the web front end. It calls the API for all data, including login, events, enrolments and results. The API address is configured in `RaceDay.MVC/appsettings.json`:
+
+```json
+"ApiSettings": {
+  "BaseUrl": "http://localhost:5093/"
+}
+```
+
+## Prerequisites
+
+- .NET 10 SDK
+- SQL Server Express (the connection string is in `RaceDayAPI/appsettings.json`; update `DefaultConnection` to match your SQL Server instance)
+- The database created with `docs/RaceDay.sql`
+- Docker Desktop (only needed for the Docker steps below)
+
+### Azure Blob Storage configuration
+
+The API stores images in the Azure Blob Storage container `raceday-images`. Real Azure connection details are **never committed to GitHub**. Add them with .NET user secrets on the API project (see the `AzureBlobStorage` section of `RaceDayAPI/appsettings.json` for the setting names) or with environment variables.
+
+## Building & Running
+
+### Build and test
 
 ```bash
 # Build the solution
-dotnet build
-
-# Run the API
-dotnet run
+dotnet build RaceDayAPI.slnx
 
 # Run tests
-dotnet test
+dotnet test RaceDayAPI.slnx
 ```
+
+### Run the API
+
+```bash
+dotnet run --project RaceDayAPI
+```
+
+By default the API listens on `http://localhost:5093` and `https://localhost:7054`.
+
+### Run the MVC app locally
+
+With the API running, in a second terminal:
+
+```bash
+dotnet run --project RaceDay.MVC
+```
+
+Open the URL printed in the console.
 
 ### Build Status
 
 ✅ **All tests passing**  
 ✅ **Solution builds successfully**  
 ✅ **Type safety verified** (RaceDayUser model properly configured)
+
+## Running the MVC App with Docker
+
+The MVC app runs in a Docker container. The API keeps running on the host machine, and the container reaches it through `host.docker.internal`. The API address is passed in with the `ApiSettings__BaseUrl` environment variable, so no code change or rebuild is needed to change it.
+
+### Requirements
+
+- Docker Desktop running with Linux containers (WSL 2 backend)
+- The API running on the host machine on port 5000
+
+### 1. Build the image
+
+Run from the repository root (the folder containing `RaceDay.MVC`, `RaceDayAPI` and `RaceDay.Contracts`):
+
+```bash
+docker build -f RaceDay.MVC/Dockerfile -t raceday-mvc:part3 .
+```
+
+### 2. Start the API on the host
+
+In a separate terminal, from the repository root:
+
+```bash
+dotnet run --project RaceDayAPI --urls http://0.0.0.0:5000
+```
+
+### 3. Run the MVC container
+
+```bash
+docker run -d --name raceday-mvc -p 8080:8080 -e ApiSettings__BaseUrl=http://host.docker.internal:5000/ raceday-mvc:part3
+```
+
+### 4. Open the app
+
+Browse to http://localhost:8080
+
+### Useful Docker commands
+
+| Command                    | Purpose                                                             |
+| -------------------------- | ------------------------------------------------------------------- |
+| `docker ps`                | Show the running container                                          |
+| `docker logs raceday-mvc`  | Show the container logs                                             |
+| `docker stop raceday-mvc`  | Stop the container                                                  |
+| `docker start raceday-mvc` | Start the stopped container again                                   |
+| `docker rm raceday-mvc`    | Remove the container (required before running step 3 a second time) |
+
+### Troubleshooting
+
+- **Container name already in use**: run `docker rm -f raceday-mvc`, then run step 3 again.
+- **Port 8080 already in use**: stop the other container or program using it, or map a different host port, for example `-p 8081:8080`.
+- **Pages load but data fails**: check that the API is running on port 5000, then run `docker logs raceday-mvc`.
+- **Old page shown in the browser**: clear the browser cache or use a private window.
 
 ## Testing & Validation Checklist
 
@@ -131,6 +259,7 @@ Complete evidence of testing and results is documented in [docs/api-test-results
 - ✅ **Organiser can capture results** - Result recording functionality operational
 - ✅ **Participant can view own results** - Result retrieval for participants verified
 - ✅ **All Part 2 unit tests pass** - Comprehensive unit test suite passing successfully
+- ✅ **MVC app builds as a Docker image and runs in a container** - Login and events pages work against the API through `host.docker.internal`
 
 ### Test Evidence
 
@@ -152,7 +281,7 @@ The workflow checks that:
 
 The following screenshot shows the successful GitHub Actions workflow execution:
 
-![alt text](image.png)
+![GitHub Actions workflow run](image.png)
 
 ## Project Demonstration
 
@@ -161,9 +290,12 @@ The following screenshot shows the successful GitHub Actions workflow execution:
 ## Technologies
 
 * .NET 10
-* ASP.NET Core
+* ASP.NET Core Web API
+* ASP.NET Core MVC
 * Entity Framework Core
 * SQL Server
+* Azure Blob Storage
+* Docker
 * xUnit (Testing)
 * SQL
 * Git
@@ -173,12 +305,6 @@ The following screenshot shows the successful GitHub Actions workflow execution:
 ## Project Documentation
 
 All supporting project documentation is stored in the `/docs` folder.
-
-RaceDayAPI project documentation (RaceDayAPI/docs):
-
-- No documents currently present in RaceDayAPI/docs. Place project-specific API docs here if available.
-
-
 
 ## Author
 
