@@ -30,7 +30,7 @@ ST10472346-RaceDay-Events-Management-App/
 │
 ├── .github/
 │   └── workflows/
-│       └── validate-repository-structure.yml
+│       └── ci.yml
 │
 ├── docs/
 │   ├── RaceDay.sql
@@ -79,7 +79,7 @@ ST10472346-RaceDay-Events-Management-App/
 
 | Folder/File                       | Description                                                                                    |
 | --------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `.github/workflows/`              | Contains the GitHub Actions workflow used to validate the repository structure.                |
+| `.github/workflows/`              | Contains the GitHub Actions workflow (`ci.yml`) that builds the solution and runs the tests.   |
 | `docs/RaceDay.sql`                | SQL Server database creation script and sample seed data.                                      |
 | `docs/race_day_api_endpoints.pdf` | API endpoint documentation for the RaceDay application.                                        |
 | `docs/race_day_erd.pdf`           | Entity Relationship Diagram showing the database structure.                                    |
@@ -268,18 +268,27 @@ Detailed test results, screenshots, and validation evidence are available in:
 
 ## GitHub Actions / CI
 
-GitHub Actions is used to automatically validate the required repository structure whenever changes are pushed to the repository or a pull request is created.
+GitHub Actions builds the whole solution and runs the unit tests whenever changes are pushed to the repository or a pull request is created.
 
-The workflow checks that:
+The workflow is `.github/workflows/ci.yml`. It:
 
-* The `docs` folder exists.
-* `RaceDay.sql` exists.
-* `race_day_erd.pdf` exists.
-* `race_day_api_endpoints.pdf` exists.
+1. Checks out the code.
+2. Sets up the .NET 10 SDK.
+3. Builds the solution with `dotnet build RaceDayAPI.slnx` (API, Contracts, MVC and test projects).
+4. Runs the unit tests with `dotnet test RaceDayAPI.slnx`.
 
-### CI/CD Workflow Screenshot
+### Local verification
 
-The following screenshot shows the successful GitHub Actions workflow execution:
+The same two commands were run locally on 12 November 2026:
+
+* `dotnet build RaceDayAPI.slnx`: build succeeded.
+* `dotnet test RaceDayAPI.slnx`: 17 tests, 17 passed, 0 failed, 0 skipped.
+
+> **Note:** At the time of submission, GitHub Actions runs are blocked by a billing lock on the GitHub account ("The job was not started because your account is locked due to a billing issue"). This is an account issue on GitHub's side and not a problem with the workflow or the code.
+
+### Earlier workflow run
+
+The following screenshot shows an earlier successful run of the repository-structure check from Part 1:
 
 ![GitHub Actions workflow run](image.png)
 
