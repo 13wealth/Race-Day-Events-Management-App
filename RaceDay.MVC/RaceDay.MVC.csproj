@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>RaceDay.MVC</RootNamespace>
+    <UserSecretsId>4867a0db-9720-4425-a1d5-924cf3470a01</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
