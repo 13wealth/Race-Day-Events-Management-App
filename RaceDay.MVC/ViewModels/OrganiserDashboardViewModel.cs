@@ -130,6 +130,9 @@ namespace RaceDay.Mvc.ViewModels
 
         [JsonPropertyName("longitude")]
         public decimal Longitude { get; set; }
+
+        [JsonPropertyName("banner_image_url")]
+        public string? BannerImageUrl { get; set; }
     }
 
 

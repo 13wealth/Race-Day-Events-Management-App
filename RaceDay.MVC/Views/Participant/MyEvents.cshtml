@@ -45,7 +45,7 @@
                 <tbody>
                     @foreach (var item in Model.Enrollments)
                     {
-                        <tr>
+                        <tr style="cursor: pointer;" onclick="window.location.href='@Url.Action("EventDetails", new { eventId = item.EventId })'">
                             <td>@item.EventName</td>
                             <td>@item.Location</td>
                             <td>@item.EventDate.ToString("dd MMM yyyy HH:mm")</td>

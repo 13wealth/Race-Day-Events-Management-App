@@ -10,6 +10,14 @@
         Back to Events
     </a>
 
+    @if (!string.IsNullOrWhiteSpace(Model.Event.BannerImageUrl))
+    {
+        <img src="@Url.Action("Banner", "Events", new { eventId = Model.Event.EventId })"
+             class="img-fluid rounded mb-4"
+             alt="@Model.Event.EventName banner"
+             style="width: 100%; max-height: 400px; object-fit: cover;" />
+    }
+
     <h2>@Model.Event.EventName</h2>
 
     <p>@Model.Event.Description</p>

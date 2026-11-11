@@ -14,7 +14,10 @@
         <p>Enter the details of your new race event.</p>
     </div>
 
-    <form asp-action="CreateEvent" method="post" class="event-form">
+    <form asp-action="CreateEvent"
+          method="post"
+          enctype="multipart/form-data"
+          class="event-form">
 
         <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
 
@@ -53,7 +56,8 @@
         <div class="form-row">
             <div class="form-group">
                 <label asp-for="EventDate"></label>
-                <input asp-for="EventDate" type="date"
+                <input asp-for="EventDate"
+                       type="date"
                        asp-format="{0:yyyy-MM-dd}" />
                 <span asp-validation-for="EventDate" class="field-error"></span>
             </div>
@@ -73,6 +77,16 @@
                 <option value="cycle">Cycle</option>
             </select>
             <span asp-validation-for="EventType" class="field-error"></span>
+        </div>
+
+        <!-- Event banner image upload -->
+        <div class="form-group">
+            <label asp-for="BannerImage">Event Banner Image</label>
+            <input asp-for="BannerImage"
+                   type="file"
+                   accept=".jpg,.jpeg,.png,.webp" />
+            <span asp-validation-for="BannerImage" class="field-error"></span>
+            <small>Optional. Maximum file size: 5 MB. Supported formats: JPG, JPEG, PNG and WEBP.</small>
         </div>
 
         <input asp-for="Status" type="hidden" />

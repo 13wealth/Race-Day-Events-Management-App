@@ -555,9 +555,13 @@ namespace RaceDay.MVC.Controllers
         }
 
 
+
         /*
          * CREATE EVENT - POST
-         * Validates the form and sends the new event to the API.
+         * 1. Validates the event form.
+         * 2. Sends the event details to the API.
+         * 3. Retrieves the newly created event ID.
+         * 4. Uploads the selected banner image through the API.
          */
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -578,8 +582,11 @@ namespace RaceDay.MVC.Controllers
                 "api/events",
                 request);
 
-            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
                 return RedirectToAction("Login", "Auth");
+
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+                return RedirectToAction("AccessDenied", "Home");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -590,7 +597,44 @@ namespace RaceDay.MVC.Controllers
                 return View(model);
             }
 
-            TempData["SuccessMessage"] = "Event created successfully.";
+            // Retrieve the ID of the newly created event.
+            EventApiResponse? createdEvent =
+                await _api.ReadAsync<EventApiResponse>(response);
+
+            if (createdEvent == null || createdEvent.EventId <= 0)
+            {
+                TempData["ErrorMessage"] =
+                    "The event was created, but its ID could not be retrieved.";
+
+                return RedirectToAction(nameof(Events));
+            }
+
+            // Upload the banner only when an image was selected.
+            if (model.BannerImage != null && model.BannerImage.Length > 0)
+            {
+                using var bannerResponse = await _api.UploadFileAsync(
+                    $"api/events/{createdEvent.EventId}/banner",
+                    model.BannerImage);
+
+                if (bannerResponse.StatusCode == HttpStatusCode.Unauthorized)
+                    return RedirectToAction("Login", "Auth");
+
+                if (bannerResponse.StatusCode == HttpStatusCode.Forbidden)
+                    return RedirectToAction("AccessDenied", "Home");
+
+                if (!bannerResponse.IsSuccessStatusCode)
+                {
+                    TempData["ErrorMessage"] =
+                        "The event was created, but the banner upload failed.";
+
+                    return RedirectToAction(nameof(Events));
+                }
+            }
+
+            TempData["SuccessMessage"] =
+                model.BannerImage != null && model.BannerImage.Length > 0
+                    ? "Event and banner created successfully."
+                    : "Event created successfully.";
 
             return RedirectToAction(nameof(Events));
         }
@@ -640,16 +684,21 @@ namespace RaceDay.MVC.Controllers
                 EventDate = eventItem.EventDate,
                 Distance = eventItem.Distance,
                 EventType = eventItem.EventType,
-                Status = eventItem.Status
+                Status = eventItem.Status,
+                BannerImageUrl = eventItem.BannerImageUrl
             };
 
             return View(model);
         }
 
 
+
         /*
          * EDIT EVENT - POST
-         * Validates the changes and sends an update request to the API.
+         * 1. Validates the event form.
+         * 2. Sends the updated event details to the API.
+         * 3. Uploads a replacement banner if a new image was selected.
+         * 4. Preserves the existing banner when no replacement is selected.
          */
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -672,11 +721,14 @@ namespace RaceDay.MVC.Controllers
                 $"api/events/{eventId}",
                 request);
 
-            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
                 return RedirectToAction("Login", "Auth");
 
-            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            if (response.StatusCode == HttpStatusCode.Forbidden)
                 return RedirectToAction("AccessDenied", "Home");
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                return NotFound();
 
             if (!response.IsSuccessStatusCode)
             {
@@ -687,7 +739,32 @@ namespace RaceDay.MVC.Controllers
                 return View(model);
             }
 
-            TempData["SuccessMessage"] = "Event updated successfully.";
+            // Upload a replacement banner only when a new image was selected.
+            if (model.BannerImage != null && model.BannerImage.Length > 0)
+            {
+                using var bannerResponse = await _api.UploadFileAsync(
+                    $"api/events/{eventId}/banner",
+                    model.BannerImage);
+
+                if (bannerResponse.StatusCode == HttpStatusCode.Unauthorized)
+                    return RedirectToAction("Login", "Auth");
+
+                if (bannerResponse.StatusCode == HttpStatusCode.Forbidden)
+                    return RedirectToAction("AccessDenied", "Home");
+
+                if (!bannerResponse.IsSuccessStatusCode)
+                {
+                    TempData["ErrorMessage"] =
+                        "Event details were updated, but the banner replacement failed.";
+
+                    return RedirectToAction(nameof(Events));
+                }
+            }
+
+            TempData["SuccessMessage"] =
+                model.BannerImage != null && model.BannerImage.Length > 0
+                    ? "Event and banner updated successfully."
+                    : "Event updated successfully.";
 
             return RedirectToAction(nameof(Events));
         }

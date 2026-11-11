@@ -16,14 +16,20 @@ namespace RaceDay.API.Controllers
     public class EventsController : ControllerBase
     {
         private readonly EventService _eventService;
+        private readonly IBlobStorageService _blobStorageService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsController"/> class.
         /// </summary>
         /// <param name="eventService">The event service.</param>
-        public EventsController(EventService eventService)
+        /// <param name="blobStorageService">The blob storage service.</param>
+        public EventsController(
+                                EventService eventService, 
+                                IBlobStorageService blobStorageService
+            )
         {
             _eventService = eventService;
+            _blobStorageService = blobStorageService;
         }
 
         /// <summary>
@@ -148,7 +154,8 @@ namespace RaceDay.API.Controllers
                 event_date = response.EventDate,
                 distance = response.Distance,
                 event_type = response.EventType,
-                status = response.Status
+                status = response.Status,
+                banner_image_url = response.BannerImageUrl
             });
         }
 
@@ -280,5 +287,39 @@ namespace RaceDay.API.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+
+        /// <summary>
+        /// Retrieves the banner image for a specific event.    
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <returns></returns>
+        [HttpGet("{eventId}/banner")]
+        [RequireRole]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetEventBanner(int eventId)
+        {
+            EventService.EventDetailResponse response =
+                _eventService.GetEvent(eventId);
+
+            if (response.StatusCode == 404)
+                return NotFound(new { error = response.Error });
+
+            if (string.IsNullOrWhiteSpace(response.BannerImageUrl))
+                return NotFound(new { error = "Event banner not found." });
+
+            var image = await _blobStorageService.DownloadProfileImageAsync(
+                response.BannerImageUrl);
+
+            if (image.Content == null)
+                return NotFound(new { error = "Event banner image not found." });
+
+            return File(
+                image.Content,
+                image.ContentType ?? "application/octet-stream");
+        }
+
     }
 }

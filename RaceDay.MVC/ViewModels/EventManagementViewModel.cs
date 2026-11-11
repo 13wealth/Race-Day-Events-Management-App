@@ -5,6 +5,7 @@
  ***************************************************************************************/
 
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace RaceDay.Mvc.ViewModels
 {
@@ -43,5 +44,9 @@ namespace RaceDay.Mvc.ViewModels
 
         [Required]
         public string Status { get; set; } = "scheduled";
+
+        public IFormFile? BannerImage { get; set; }
+
+        public string? BannerImageUrl { get; set; }
     }
 }

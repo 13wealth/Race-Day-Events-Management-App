@@ -15,7 +15,6 @@
             <h2>My Events</h2>
             <p>Manage the race events you have created.</p>
         </div>
-
         <a asp-action="CreateEvent" class="event-button">
             Create New Event
         </a>
@@ -53,6 +52,7 @@
             <table class="event-table">
                 <thead>
                     <tr>
+                        <th>Banner</th>
                         <th>Event</th>
                         <th>Location</th>
                         <th>Date</th>
@@ -72,6 +72,18 @@
                         var isClickable = rowIndex % 2 == 0 ? "event-row-clickable" : "";
 
                         <tr class="@rowClass @isClickable" data-event-id="@eventItem.EventId" onclick="@(rowIndex % 2 == 0 ? $"openEventDetails({eventItem.EventId}, '{eventItem.EventName}', '{eventItem.Location}', '{eventItem.EventDate:dd MMM yyyy}', '{eventItem.Distance}', '{eventItem.EventType}', '{eventItem.Status}')" : "")">
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(eventItem.BannerImageUrl))
+                                {
+                                    <img src="@Url.Action("Banner", "Events", new { eventId = eventItem.EventId })"
+                                         alt="@eventItem.EventName banner"
+                                         style="width: 90px; height: 55px; object-fit: cover; border-radius: 5px;" />
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No banner</span>
+                                }
+                            </td>
                             <td>@eventItem.EventName</td>
                             <td>@eventItem.Location</td>
                             <td>@eventItem.EventDate.ToString("dd MMM yyyy")</td>

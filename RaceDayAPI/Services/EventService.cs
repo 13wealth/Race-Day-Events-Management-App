@@ -112,6 +112,7 @@ namespace RaceDay.API.Services
         {
             // Retrieve all events from the database and add them to a list
             List<EventModel> events = new List<EventModel>();
+
             foreach (EventModel e in _db.Events)
             {
                 events.Add(e);
@@ -138,7 +139,8 @@ namespace RaceDay.API.Services
                     event_date = e.EventDate,
                     distance = e.Distance,
                     event_type = e.EventType,
-                    status = e.Status
+                    status = e.Status,
+                    banner_image_url = e.BannerImageUrl
                 };
                 response.Events.Add(eventObj);
             }
@@ -197,7 +199,8 @@ namespace RaceDay.API.Services
                     event_date = e.EventDate,
                     distance = e.Distance,
                     event_type = e.EventType,
-                    status = e.Status
+                    status = e.Status,
+                    banner_image_url = e.BannerImageUrl
                 };
                 response.Events.Add(eventObj);
             }
@@ -246,6 +249,7 @@ namespace RaceDay.API.Services
             response.EventType = found.EventType;
             response.Status = found.Status;
             response.StatusCode = 200;
+            response.BannerImageUrl = found.BannerImageUrl;
 
             return response;
         }
@@ -516,6 +520,7 @@ namespace RaceDay.API.Services
             public string? Status { get; set; }
             public string? Error { get; set; }
             public int StatusCode { get; set; }
+            public string? BannerImageUrl { get; set; }
         }
 
         public class EventUpdateResponse

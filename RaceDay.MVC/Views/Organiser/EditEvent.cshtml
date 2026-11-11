@@ -17,6 +17,7 @@
     <form asp-action="EditEvent"
           asp-route-eventId="@Context.Request.Query["eventId"]"
           method="post"
+          enctype="multipart/form-data"
           class="event-form">
 
         <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
@@ -56,7 +57,8 @@
         <div class="form-row">
             <div class="form-group">
                 <label asp-for="EventDate"></label>
-                <input asp-for="EventDate" type="date"
+                <input asp-for="EventDate"
+                       type="date"
                        asp-format="{0:yyyy-MM-dd}" />
                 <span asp-validation-for="EventDate" class="field-error"></span>
             </div>
@@ -76,6 +78,25 @@
                 <option value="cycle">Cycle</option>
             </select>
             <span asp-validation-for="EventType" class="field-error"></span>
+        </div>
+
+        <!-- Existing event banner -->
+        @if (!string.IsNullOrEmpty(Model.BannerImageUrl))
+        {
+            <div class="form-group">
+                <label>Current Event Banner</label>
+                <p>A banner image is already associated with this event.</p>
+            </div>
+        }
+
+        <!-- Replace event banner image -->
+        <div class="form-group">
+            <label asp-for="BannerImage">Replace Event Banner</label>
+            <input asp-for="BannerImage"
+                   type="file"
+                   accept=".jpg,.jpeg,.png,.webp" />
+            <span asp-validation-for="BannerImage" class="field-error"></span>
+            <small>Optional. Leave empty to keep the existing banner. Maximum file size: 5 MB.</small>
         </div>
 
         <input asp-for="Status" type="hidden" />
