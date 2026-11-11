@@ -54,49 +54,52 @@ public class RaceEvent
     [Column("updated_at", TypeName = "datetime2")]
     public DateTime? UpdatedAt { get; set; }
 
+    [Column("banner_image_url", TypeName = "varchar(500)")]
+    public string? BannerImageUrl { get; set; }
+
     public Organiser Organiser { get; set; } = null!;
     public ICollection<Category> Categories { get; set; } = new List<Category>();
     public ICollection<Route> Routes { get; set; } = new List<Route>();
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 }
 
-/// <summary>
-/// Represents a route within a race event,
-/// which participants will follow during the race.
-/// </summary>
-[Table("ROUTE")]
-public class Route
-{
-    [Key]
-    [Column("route_id")]
-    public int RouteId { get; set; }
+    /// <summary>
+    /// Represents a route within a race event,
+    /// which participants will follow during the race.
+    /// </summary>
+    [Table("ROUTE")]
+    public class Route
+    {
+        [Key]
+        [Column("route_id")]
+        public int RouteId { get; set; }
 
-    [Column("event_id")]
-    public int EventId { get; set; }
+        [Column("event_id")]
+        public int EventId { get; set; }
 
-    [Required, StringLength(200)]
-    [Column("route_name", TypeName = "nvarchar(200)")]
-    public string RouteName { get; set; } = string.Empty;
+        [Required, StringLength(200)]
+        [Column("route_name", TypeName = "nvarchar(200)")]
+        public string RouteName { get; set; } = string.Empty;
 
-    [Column("distance", TypeName = "decimal(10,2)")]
-    public decimal Distance { get; set; }
+        [Column("distance", TypeName = "decimal(10,2)")]
+        public decimal Distance { get; set; }
 
-    [Required, StringLength(200)]
-    [Column("start_location", TypeName = "nvarchar(200)")]
-    public string StartLocation { get; set; } = string.Empty;
+        [Required, StringLength(200)]
+        [Column("start_location", TypeName = "nvarchar(200)")]
+        public string StartLocation { get; set; } = string.Empty;
 
-    [Required, StringLength(200)]
-    [Column("end_location", TypeName = "nvarchar(200)")]
-    public string EndLocation { get; set; } = string.Empty;
+        [Required, StringLength(200)]
+        [Column("end_location", TypeName = "nvarchar(200)")]
+        public string EndLocation { get; set; } = string.Empty;
 
-    [Column("map_url", TypeName = "nvarchar(max)")]
-    public string? MapUrl { get; set; }
+        [Column("map_url", TypeName = "nvarchar(max)")]
+        public string? MapUrl { get; set; }
 
-    [Column("created_at", TypeName = "datetime2")]
-    public DateTime CreatedAt { get; set; }
+        [Column("created_at", TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; }
 
-    [Column("updated_at", TypeName = "datetime2")]
-    public DateTime? UpdatedAt { get; set; }
+        [Column("updated_at", TypeName = "datetime2")]
+        public DateTime? UpdatedAt { get; set; }
 
-    public RaceEvent Event { get; set; } = null!;
-}
+        public RaceEvent Event { get; set; } = null!;
+    }

@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using RaceDay.Contracts;
 using RaceDay.API.Security;
 using RaceDay.API.Services;
+using Microsoft.AspNetCore.Http;
+using RaceDay.API.Storage;
 
 namespace RaceDay.API.Controllers
 {
@@ -112,6 +114,7 @@ namespace RaceDay.API.Controllers
             return Ok(response.Events);
         }
 
+
         /// <summary>
         /// Retrieves a specific event by ID.
         /// </summary>
@@ -148,6 +151,7 @@ namespace RaceDay.API.Controllers
                 status = response.Status
             });
         }
+
 
         /// <summary>
         /// Updates an existing event.
@@ -202,6 +206,7 @@ namespace RaceDay.API.Controllers
             });
         }
 
+
         /// <summary>
         /// Deletes a race event.
         /// Only event organizers can perform this action.
@@ -233,6 +238,47 @@ namespace RaceDay.API.Controllers
             }
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Uploads a banner image for an event.
+        /// Only the organiser who owns the event can perform this action.
+        /// </summary>
+        [HttpPost("{eventId}/banner")]
+        [RequireRole("organiser")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UploadEventBanner(
+            int eventId, IFormFile file)
+        {
+            try
+            {
+                EventService.EventBannerResponse response =
+                    await _eventService.UploadEventBannerAsync(eventId, file);
+
+                if (response.StatusCode == 403)
+                {
+                    return StatusCode(403, new { error = response.Error });
+                }
+
+                if (response.StatusCode == 404)
+                {
+                    return NotFound(new { error = response.Error });
+                }
+
+                return Ok(new
+                {
+                    event_id = response.EventId,
+                    banner_image_url = response.BannerImageUrl
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
     }
 }

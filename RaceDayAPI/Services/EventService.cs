@@ -2,6 +2,7 @@ using RaceDay.API.Data;
 using RaceDay.Contracts;
 using RaceDay.API.Models;
 using EventModel = RaceDay.API.Models.RaceEvent;
+using RaceDay.API.Storage;
 
 namespace RaceDay.API.Services
 {
@@ -10,12 +11,19 @@ namespace RaceDay.API.Services
         private readonly RaceDayContext _db;
         private readonly AuthenticationHelper _authHelper;
         private readonly ValidationHelper _validationHelper;
+        private readonly IBlobStorageService _blobStorageService;
 
-        public EventService(RaceDayContext db, AuthenticationHelper authHelper, ValidationHelper validationHelper)
+        public EventService(
+                            RaceDayContext db, 
+                            AuthenticationHelper authHelper, 
+                            ValidationHelper validationHelper, 
+                            IBlobStorageService blobStorageService
+            )
         {
             _db = db;
             _authHelper = authHelper;
             _validationHelper = validationHelper;
+            _blobStorageService = blobStorageService;
         }
 
         /*
@@ -207,7 +215,7 @@ namespace RaceDay.API.Services
         public EventDetailResponse GetEvent(int eventId)
         {
             // Search for an event with the matching event ID in the database
-            EventModel found = null;                                                    // Initialize found event to null
+            EventModel? found = null;                                                    // Initialize found event to null
             foreach (EventModel e in _db.Events)
             {
                 if (e.EventId == eventId)                                               // Check if event ID matches
@@ -263,7 +271,7 @@ namespace RaceDay.API.Services
             }
 
             // Search for the event to be updated by its event ID
-            EventModel found = null;                                                    // Initialize found event to null
+            EventModel? found = null;                                                    // Initialize found event to null
             foreach (EventModel e in _db.Events)
             {
                 if (e.EventId == eventId)                                               // Check if event ID matches
@@ -365,7 +373,7 @@ namespace RaceDay.API.Services
             }
 
             // Search for the event to be deleted by its event ID
-            EventModel found = null;                                                    // Initialize found event to null
+            EventModel? found = null;                                                    // Initialize found event to null
             foreach (EventModel e in _db.Events)
             {
                 if (e.EventId == eventId)                                               // Check if event ID matches
@@ -405,63 +413,138 @@ namespace RaceDay.API.Services
             return response;
         }
 
+        /*
+         * Uploads a banner image for an existing event.
+         * Verifies that the logged-in organiser owns the event.
+         * Uploads the banner to Azure Blob Storage.
+         * Saves the banner image URL against the event.
+         * Returns appropriate status codes for success or errors.
+         */
+        public async Task<EventBannerResponse> UploadEventBannerAsync(
+            int eventId, IFormFile file)
+        {
+            Organiser organiser = _authHelper.GetLoggedInOrganiser();
+
+            if (organiser == null)
+            {
+                return new EventBannerResponse
+                {
+                    Error = "Organiser profile not found.",
+                    StatusCode = 404
+                };
+            }
+
+            EventModel? found = null;
+
+            foreach (EventModel e in _db.Events)
+            {
+                if (e.EventId == eventId)
+                {
+                    found = e;
+                    break;
+                }
+            }
+
+            if (found == null)
+            {
+                return new EventBannerResponse
+                {
+                    Error = "Event not found.",
+                    StatusCode = 404
+                };
+            }
+
+            if (found.OrganiserId != organiser.OrganiserId)
+            {
+                return new EventBannerResponse
+                {
+                    Error = "You can only upload banners for your own events.",
+                    StatusCode = 403
+                };
+            }
+
+            string imageUrl = await _blobStorageService.UploadEventBannerAsync(
+                file, eventId);
+
+            found.BannerImageUrl = imageUrl;
+            found.UpdatedAt = DateTime.UtcNow;
+
+            _db.SaveChanges();
+
+            return new EventBannerResponse
+            {
+                EventId = found.EventId,
+                BannerImageUrl = found.BannerImageUrl,
+                StatusCode = 200
+            };
+        }
+
+
         public class EventCreateResponse
         {
             public int EventId { get; set; }
-            public string EventName { get; set; }
-            public string Description { get; set; }
-            public string Location { get; set; }
+            public string? EventName { get; set; }
+            public string? Description { get; set; }
+            public string? Location { get; set; }
             public decimal Latitude { get; set; }
             public decimal Longitude { get; set; }
             public DateTime EventDate { get; set; }
             public decimal Distance { get; set; }
-            public string EventType { get; set; }
-            public string Status { get; set; }
-            public string Error { get; set; }
+            public string? EventType { get; set; }
+            public string? Status { get; set; }
+            public string? Error { get; set; }
             public int StatusCode { get; set; }
         }
 
         public class EventListResponse
         {
-            public List<object> Events { get; set; }
+            public List<object>? Events { get; set; }
             public int StatusCode { get; set; }
         }
 
         public class EventDetailResponse
         {
             public int EventId { get; set; }
-            public string EventName { get; set; }
-            public string Description { get; set; }
-            public string Location { get; set; }
+            public string? EventName { get; set; }
+            public string? Description { get; set; }
+            public string? Location { get; set; }
             public decimal Latitude { get; set; }
             public decimal Longitude { get; set; }
             public DateTime EventDate { get; set; }
             public decimal Distance { get; set; }
-            public string EventType { get; set; }
-            public string Status { get; set; }
-            public string Error { get; set; }
+            public string? EventType { get; set; }
+            public string? Status { get; set; }
+            public string? Error { get; set; }
             public int StatusCode { get; set; }
         }
 
         public class EventUpdateResponse
         {
             public int EventId { get; set; }
-            public string EventName { get; set; }
-            public string Description { get; set; }
-            public string Location { get; set; }
+            public string? EventName { get; set; }
+            public string? Description { get; set; }
+            public string? Location { get; set; }
             public decimal Latitude { get; set; }
             public decimal Longitude { get; set; }
             public DateTime EventDate { get; set; }
             public decimal Distance { get; set; }
-            public string EventType { get; set; }
-            public string Status { get; set; }
-            public string Error { get; set; }
+            public string? EventType { get; set; }
+            public string? Status { get; set; }
+            public string? Error { get; set; }
             public int StatusCode { get; set; }
         }
 
         public class EventDeleteResponse
         {
-            public string Error { get; set; }
+            public string? Error { get; set; }
+            public int StatusCode { get; set; }
+        }
+
+        public class EventBannerResponse
+        {
+            public int EventId { get; set; }
+            public string? BannerImageUrl { get; set; }
+            public string? Error { get; set; }
             public int StatusCode { get; set; }
         }
     }

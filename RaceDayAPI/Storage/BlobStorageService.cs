@@ -10,15 +10,27 @@ namespace RaceDay.API.Storage
         private readonly IConfiguration _configuration;
 
         public BlobStorageService(
-            BlobServiceClient blobServiceClient,
-            IConfiguration configuration)
+                                    BlobServiceClient blobServiceClient,
+                                    IConfiguration configuration
+            )
         {
             _blobServiceClient = blobServiceClient;
             _configuration = configuration;
         }
 
+
+        /*
+         * Uploads a profile image to Azure Blob Storage.
+         * 
+         * @param file The image file to upload.
+         * @param userId The ID of the user for whom the profile image is being uploaded.
+         * @returns The URL of the uploaded image.
+         * @throws ArgumentException If the file is null, empty, exceeds 5 MB, or has an invalid extension.
+         */
         public async Task<string> UploadProfileImageAsync(
-            IFormFile file, int userId)
+                                                            IFormFile file, 
+                                                            int userId
+            )
         {
             if (file == null || file.Length == 0)
             {
@@ -67,8 +79,11 @@ namespace RaceDay.API.Storage
             return blobClient.Uri.AbsoluteUri;
         }
 
-        public async Task<(byte[]? Content, string? ContentType)> DownloadProfileImageAsync(
-    string imageUrl)
+        public async Task<(
+                            byte[]? Content, 
+                            string? ContentType
+                         )> 
+                DownloadProfileImageAsync(string imageUrl)
         {
             if (string.IsNullOrWhiteSpace(imageUrl))
                 return (null, null);
@@ -110,6 +125,65 @@ namespace RaceDay.API.Storage
             {
                 return (null, null);
             }
+        }
+
+
+        /*
+         * Uploads an event banner image to Azure Blob Storage.
+         * 
+         * @param file The image file to upload.
+         * @param eventId The ID of the event for which the banner is being uploaded.
+         * @returns The URL of the uploaded image.
+         * @throws ArgumentException If the file is null, empty, exceeds 5 MB, or has an invalid extension.
+         */
+        public async Task<string> UploadEventBannerAsync(IFormFile file, int eventId)
+        {
+            if (file == null || file.Length == 0)
+            {
+                throw new ArgumentException("Please select an image.");
+            }
+
+            if (file.Length > 5 * 1024 * 1024)
+            {
+                throw new ArgumentException("Image size cannot exceed 5 MB.");
+            }
+
+            string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+
+            if (!allowedExtensions.Contains(extension))
+            {
+                throw new ArgumentException("Only JPG, PNG and WEBP images are allowed.");
+            }
+
+            string containerName =
+                _configuration["AzureBlobStorage:ContainerName"];
+
+            BlobContainerClient containerClient =
+                _blobServiceClient.GetBlobContainerClient(containerName);
+
+            await containerClient.CreateIfNotExistsAsync();
+
+            string fileName =
+                $"event-banners/{eventId}/{Guid.NewGuid()}{extension}";
+
+            BlobClient blobClient =
+                containerClient.GetBlobClient(fileName);
+
+            BlobUploadOptions uploadOptions = new BlobUploadOptions
+            {
+                HttpHeaders = new BlobHttpHeaders
+                {
+                    ContentType = file.ContentType
+                }
+            };
+
+            using Stream stream = file.OpenReadStream();
+
+            await blobClient.UploadAsync(stream, uploadOptions);
+
+            return blobClient.Uri.AbsoluteUri;
         }
     }
 }

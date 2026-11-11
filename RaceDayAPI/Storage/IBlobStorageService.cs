@@ -6,10 +6,12 @@ namespace RaceDay.API.Storage
     {
         Task<string> UploadProfileImageAsync(IFormFile file, int userId);
 
+        Task<string> UploadEventBannerAsync(IFormFile file, int eventId);
+
         Task<(
-              byte[]? Content, 
+              byte[]? Content,
               string? ContentType
-        )> 
-            DownloadProfileImageAsync(string imageUrl);
+            )>
+        DownloadProfileImageAsync(string imageUrl);
     }
 }
