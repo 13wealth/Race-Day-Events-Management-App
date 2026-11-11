@@ -243,15 +243,16 @@
 }
 
     .event-row-clickable:hover {
-        background-color: #f0f0f0;
+        background-color: #e8f0ff;
     }
 
-.event-row-even {
-    background-color: #ffffff;
+/* Alternating row colors using nth-child */
+.event-table tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
 }
 
-.event-row-odd {
-    background-color: #f9f9f9;
+.event-table tbody tr:nth-child(even) {
+    background-color: #ffffff;
 }
 
 /* Modal Styles */

@@ -68,10 +68,7 @@
                     }
                     @foreach (var eventItem in Model)
                     {
-                        var rowClass = rowIndex % 2 == 0 ? "event-row-even" : "event-row-odd";
-                        var isClickable = rowIndex % 2 == 0 ? "event-row-clickable" : "";
-
-                        <tr class="@rowClass @isClickable" data-event-id="@eventItem.EventId" onclick="@(rowIndex % 2 == 0 ? $"openEventDetails({eventItem.EventId}, '{eventItem.EventName}', '{eventItem.Location}', '{eventItem.EventDate:dd MMM yyyy}', '{eventItem.Distance}', '{eventItem.EventType}', '{eventItem.Status}')" : "")">
+                        <tr class="event-row-clickable" data-event-id="@eventItem.EventId" onclick="openEventDetails(@eventItem.EventId, '@eventItem.EventName', '@eventItem.Location', '@eventItem.EventDate.ToString("dd MMM yyyy")', '@eventItem.Distance', '@eventItem.EventType', '@eventItem.Status')" style="cursor: pointer;">
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(eventItem.BannerImageUrl))
                                 {

@@ -33,6 +33,7 @@ namespace RaceDay.Mvc.ViewModels
         public string CategoryName { get; set; } = "";
         public DateTime EntryDate { get; set; }
         public string Status { get; set; } = "";
+        public string? BannerImageUrl { get; set; }
     }
 
     public class ParticipantMyEventsViewModel

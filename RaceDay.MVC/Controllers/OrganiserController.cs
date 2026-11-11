@@ -190,6 +190,7 @@ namespace RaceDay.MVC.Controllers
                 eventViewModel.Distance = eventItem.Distance;
                 eventViewModel.EventType = eventItem.EventType;
                 eventViewModel.Status = eventItem.Status;
+                eventViewModel.BannerImageUrl = eventItem.BannerImageUrl;
 
                 using var enrolmentsResponse = await _api.SendAsync(
                     HttpMethod.Get,

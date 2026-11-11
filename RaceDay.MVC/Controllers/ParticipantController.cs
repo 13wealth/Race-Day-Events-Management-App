@@ -247,6 +247,7 @@ namespace RaceDay.MVC.Controllers
                 enrollmentItem.CategoryName = category.CategoryName;
                 enrollmentItem.EntryDate = enrolment.EntryDate;
                 enrollmentItem.Status = enrolment.Status;
+                enrollmentItem.BannerImageUrl = eventDetails.BannerImageUrl;
 
                 model.Enrollments.Add(enrollmentItem);
             }

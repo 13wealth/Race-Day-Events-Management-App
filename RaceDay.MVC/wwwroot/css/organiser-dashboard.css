@@ -115,3 +115,20 @@
     font-weight: 600;
     font-family: 'Roboto', sans-serif;
 }
+
+/* Clickable Row Styles for Dashboard Table */
+.event-table tbody tr.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    pointer-events: auto;
+}
+
+.event-table tbody tr.clickable-row:hover {
+    background-color: #e8f0ff;
+}
+
+.event-table tbody tr.clickable-row td {
+    pointer-events: auto;
+    cursor: pointer;
+}
+}

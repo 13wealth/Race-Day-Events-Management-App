@@ -90,6 +90,7 @@ namespace RaceDay.Mvc.ViewModels
         public decimal Distance { get; set; }
         public string EventType { get; set; } = "";
         public string Status { get; set; } = "";
+        public string? BannerImageUrl { get; set; }
 
         public int? EnrolmentCount { get; set; }
     }

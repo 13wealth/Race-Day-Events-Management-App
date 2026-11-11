@@ -71,6 +71,7 @@
 
                     <thead>
                         <tr>
+                            <th>Banner</th>
                             <th>Event</th>
                             <th>Location</th>
                             <th>Date</th>
@@ -83,7 +84,19 @@
                     <tbody>
                         @foreach (var eventItem in Model.Events.OrderBy(e => e.EventDate))
                         {
-                            <tr>
+                            <tr class="clickable-row" data-event-id="@eventItem.EventId" onclick="window.location.href='@Url.Action("EditEvent", "Organiser", new { eventId = eventItem.EventId })';" style="cursor: pointer;">
+                                <td style="text-align: center; vertical-align: middle;">
+                                    @if (!string.IsNullOrWhiteSpace(eventItem.BannerImageUrl))
+                                    {
+                                        <img src="@Url.Action("Banner", "Events", new { eventId = eventItem.EventId })" 
+                                             alt="@eventItem.EventName banner" 
+                                             style="height: 50px; width: auto; object-fit: contain; border-radius: 4px;" />
+                                    }
+                                    else
+                                    {
+                                        <span style="color: #999; font-size: 0.9rem;">No banner</span>
+                                    }
+                                </td>
                                 <td>
                                     <strong>@eventItem.EventName</strong>
                                     <div class="text-muted small">
