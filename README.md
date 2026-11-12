@@ -141,6 +141,54 @@ The `RaceDay.MVC` project is the web front end. It calls the API for all data, i
 }
 ```
 
+## User Roles and Features
+
+RaceDay supports two user roles: Organiser and Participant. Each role has access to functionality designed for its specific responsibilities.
+
+### 1. Organiser
+
+Organisers are responsible for managing race events and overseeing participant activities.
+
+**Features:**
+
+* Access the organiser dashboard.
+* Create, view, update and delete race events.
+* Upload and manage event banner images.
+* Manage event categories.
+* View and manage participant enrolments.
+* Record and manage race results.
+
+### 2. Participant
+
+Participants can browse available events, enrol in races and track their participation history.
+
+**Features:**
+
+* Browse available race events.
+* Search and filter events.
+* View event details.
+* Enrol in available events.
+* View personal event enrolments.
+* View race history and finishing positions.
+* Update personal profile information.
+* Upload and update profile pictures.
+
+## Login and Session Flow
+
+RaceDay uses session-based authentication to manage user access and maintain login state.
+
+1. **Login:** The user enters their email address and password on the login page.
+2. **Authentication:** The MVC application sends the login credentials to the RaceDay API for verification.
+3. **Session Creation:** Once authenticated, the application establishes a session containing the user's relevant information, including their role.
+4. **Role-Based Redirection:** The user is redirected to the appropriate interface:
+   * Organiser → Organiser Dashboard
+   * Participant → Participant Dashboard
+5. **Authorisation:** The application uses the authenticated user's role to control access to the relevant pages and functionality.
+6. **Session Persistence:** The session maintains the user's authenticated state while navigating between pages.
+7. **Logout:** When the user logs out, the session is cleared and the user is redirected to the login page.
+
+Unauthenticated users are required to log in before accessing protected functionality.
+
 ## Prerequisites
 
 - .NET 10 SDK
