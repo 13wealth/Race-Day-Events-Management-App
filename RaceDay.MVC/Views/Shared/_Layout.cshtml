@@ -42,12 +42,12 @@
 
             <div class="header-right">
                 <div class="header-icons">
-                    <button class="header-icon-btn" id="notificationBell" title="Notifications">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge">0</span>
-                    </button>
                     @if (userId != null)
                     {
+                        <button class="header-icon-btn" id="notificationBell" title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">0</span>
+                        </button>
                         <div class="profile-menu">
                             <button class="header-icon-btn profile-btn" id="profileBtn" title="Profile" aria-haspopup="true" aria-expanded="false">
                                 <img src="@profileImageUrl" alt="Profile" class="profile-avatar" />

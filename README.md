@@ -219,9 +219,17 @@ dotnet run --project RaceDayAPI --urls http://0.0.0.0:5000
 docker run -d --name raceday-mvc -p 8080:8080 -e ApiSettings__BaseUrl=http://host.docker.internal:5000/ raceday-mvc:part3
 ```
 
+The container shows as running with `docker ps`:
+
+![docker ps showing the raceday-mvc container running on port 8080](docs/docker-ps.png)
+
 ### 4. Open the app
 
 Browse to http://localhost:8080
+
+The RaceDay MVC app running from the container and showing data from the API:
+
+![RaceDay MVC app running at localhost:8080](docs/app-localhost-8080.png)
 
 ### Useful Docker commands
 
@@ -232,6 +240,10 @@ Browse to http://localhost:8080
 | `docker stop raceday-mvc`  | Stop the container                                                  |
 | `docker start raceday-mvc` | Start the stopped container again                                   |
 | `docker rm raceday-mvc`    | Remove the container (required before running step 3 a second time) |
+
+The container logs show the MVC app calling the API through `host.docker.internal:5000` and receiving `200` responses:
+
+![docker logs for raceday-mvc](docs/docker-logs.png)
 
 ### Troubleshooting
 
@@ -284,7 +296,13 @@ The same two commands were run locally on 12 November 2026:
 * `dotnet build RaceDayAPI.slnx`: build succeeded.
 * `dotnet test RaceDayAPI.slnx`: 17 tests, 17 passed, 0 failed, 0 skipped.
 
+![dotnet build result](docs/dotnet-build.png)
+
+![dotnet test result showing 17 tests passed](docs/dotnet-test.png)
+
 > **Note:** At the time of submission, GitHub Actions runs are blocked by a billing lock on the GitHub account ("The job was not started because your account is locked due to a billing issue"). This is an account issue on GitHub's side and not a problem with the workflow or the code.
+
+![GitHub Actions run blocked by the account billing lock](docs/github-actions-billing-error.png)
 
 ### Earlier workflow run
 

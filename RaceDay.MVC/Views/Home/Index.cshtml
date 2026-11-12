@@ -1,8 +1,45 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "RaceDay Events - Welcome";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    .landing-container {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    .landing-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    @@media (max-width: 768px) {
+        .landing-container {
+            height: 100vh;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .landing-container {
+            height: auto;
+            min-height: 100vh;
+        }
+
+        .landing-image {
+            width: 100%;
+            height: auto;
+        }
+    }
+</style>
+
+<div class="landing-container">
+    <img src="~/docs/raceday-running-community.png" alt="RaceDay Running Community" class="landing-image" />
 </div>
