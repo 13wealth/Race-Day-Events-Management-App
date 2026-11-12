@@ -393,7 +393,12 @@ The same two commands were run locally on 12 November 2026:
 
 ![GitHub Actions run blocked by the account billing lock](docs/github-actions-billing-error.png)
 
+
+### Project Demonstration
+
+[▶️ Watch the RaceDay project demonstration on YouTube](https://youtu.be/gCRpMb6tT2s)
 ---
+
 
 ## Technologies
 
